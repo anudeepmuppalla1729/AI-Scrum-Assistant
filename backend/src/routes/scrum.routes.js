@@ -3,7 +3,13 @@ import multer from "multer";
 import {
   generateSuggestions,
   pushAISuggestionsToJira,
+  chatWithScrumMaster,
+  getChatHistory,
+  getDailyStandupReport,
+  getSprintRetrospectiveReport,
 } from "../controllers/scrum.controller.js";
+import { handleJiraWebhook } from "../controllers/webhook.controller.js";
+// import { protectRoute } from "../middleware/auth.middleware.js"; // Assuming this exists or similar
 
 const storage = multer.memoryStorage();
 const upload = multer({
@@ -37,19 +43,6 @@ const router = express.Router();
  *     responses:
  *       200:
  *         description: AI-generated suggestions were created successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 message:
- *                   type: string
- *                   example: AI-generated suggestions retrieved successfully.
- *                 data:
- *                   type: object
  *       400:
  *         description: Bad request (no file provided)
  *       500:
@@ -73,10 +66,6 @@ router.post("/suggestions", upload.single("prdFile"), generateSuggestions);
  *     responses:
  *       200:
  *         description: Issues created (partial success possible)
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/PushAISuggestionsResponse'
  *       400:
  *         description: Invalid request body
  *       500:
@@ -98,18 +87,27 @@ router.post("/pushSuggestionsToJira", pushAISuggestionsToJira);
  *           schema:
  *             type: object
  *             properties:
- *               query:
+ *               message:
  *                 type: string
  *     responses:
  *       200:
  *         description: Chat response
  */
-import {
-  chatWithScrumMaster,
-  getDailyStandupReport,
-  getSprintRetrospectiveReport,
-} from "../controllers/scrum.controller.js";
 router.post("/chat", chatWithScrumMaster);
+
+/**
+ * @openapi
+ * /api/v1/scrum/chat/history:
+ *   get:
+ *     summary: Get Chat History
+ *     tags:
+ *       - Scrum
+ *     responses:
+ *       200:
+ *         description: Chat history
+ */
+router.get("/chat/history", getChatHistory);
+
 
 /**
  * @openapi
@@ -155,7 +153,6 @@ router.get("/standup", getDailyStandupReport);
  */
 router.get("/retrospective", getSprintRetrospectiveReport);
 
-import { handleJiraWebhook } from "../controllers/webhook.controller.js";
 router.post("/webhooks/jira", handleJiraWebhook);
 
 export default router;

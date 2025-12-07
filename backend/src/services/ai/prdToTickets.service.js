@@ -7,52 +7,86 @@ dotenv.config();
 
 const extractJsonFromText = (text) => {
   if (!text) return null;
-  const fencedJson = text.match(/```json\s*([\s\S]*?)```/i);
-  if (fencedJson && fencedJson[1]) return fencedJson[1].trim();
-  const fenced = text.match(/```\s*([\s\S]*?)```/);
-  if (fenced && fenced[1]) return fenced[1].trim();
+  // match ```json ... ``` (complete)
+  let match = text.match(/```json\s*([\s\S]*?)```/i);
+  if (match && match[1]) return match[1].trim();
+
+  // match ``` ... ``` (complete, generic)
+  match = text.match(/```\s*([\s\S]*?)```/);
+  if (match && match[1]) return match[1].trim();
+
+  // match ```json ... (EOF/truncated)
+  match = text.match(/```json\s*([\s\S]*)/i);
+  if (match && match[1]) return match[1].trim();
+
+  // Find first { and last } (best effort for non-fenced)
   const first = text.indexOf("{");
   const last = text.lastIndexOf("}");
-  if (first !== -1 && last !== -1 && last > first) {
-    return text.slice(first, last + 1).trim();
+  if (first !== -1) {
+    // If we have a closing brace after the opening, take the substring
+    if (last !== -1 && last > first) {
+      return text.slice(first, last + 1).trim();
+    }
+    // If no closing brace, or it's before the opening (unlikely for valid), just take from first to end
+    return text.slice(first).trim();
   }
+
   return text.trim();
 };
 
-const removeTrailingCommas = (s) =>
-  s.replace(/,\s*}/g, "}").replace(/,\s*]/g, "]");
-
 const normalizeQuotes = (s) => s.replace(/[“”]/g, '"').replace(/[‘’]/g, "'");
 
-const sanitizeJsonString = (s) => {
-  if (!s) return s;
-  let out = s.trim();
-  out = normalizeQuotes(out);
-  out = removeTrailingCommas(out);
-  return out;
+const repairMalformattedJson = (jsonString) => {
+  let cleaned = normalizeQuotes(jsonString);
+  cleaned = cleaned.replace(/[\x00-\x09\x0B-\x1F\x7F]/g, "");
+
+  try { return JSON.parse(cleaned); } catch (e) { }
+
+  cleaned = cleaned.replace(/,\s*([\]}])/g, "$1");
+
+  try { return JSON.parse(cleaned); } catch (e) { }
+
+  const stack = [];
+  let inString = false;
+  let isEscaped = false;
+
+  for (let i = 0; i < cleaned.length; i++) {
+    const char = cleaned[i];
+    if (inString) {
+      if (char === '\\' && !isEscaped) isEscaped = true;
+      else if (char === '"' && !isEscaped) inString = false;
+      else isEscaped = false;
+      continue;
+    }
+    if (char === '"') inString = true;
+    else if (char === '{') stack.push('}');
+    else if (char === '[') stack.push(']');
+    else if (char === '}' || char === ']') {
+      if (stack.length > 0 && stack[stack.length - 1] === char) stack.pop();
+    }
+  }
+
+  if (inString) cleaned += '"';
+  while (stack.length > 0) cleaned += stack.pop();
+
+  try {
+    return JSON.parse(cleaned);
+  } catch (e) {
+    throw new Error("Failed to repair malformed JSON: " + e.message);
+  }
 };
 
 const tryParseLLMJson = (text) => {
-  // If the input is already an object (e.g. AIMessage), try to extract content
   let raw = text;
   if (typeof text === "object" && text !== null) {
-    if (text.content) {
-      raw = text.content;
-    } else {
-      // If it's a raw object that might be the JSON itself
-      return text;
-    }
+    if (text.content) raw = text.content;
+    else return text;
   }
 
   const jsonString = extractJsonFromText(String(raw));
   if (!jsonString) throw new Error("No JSON found in model output.");
 
-  try {
-    return JSON.parse(jsonString);
-  } catch {
-    const cleaned = sanitizeJsonString(jsonString);
-    return JSON.parse(cleaned);
-  }
+  return repairMalformattedJson(jsonString);
 };
 
 const extractTextFromPdfBuffer = (pdfBuffer) => {
@@ -131,11 +165,10 @@ export const getSuggestionsFromPRD = async (prdBuffer, userPrompt = "") => {
                         6. Use realistic story_points (1–13).
                         7. Only output valid JSON, no markdown or explanations.
                         ### User Instructions:
-                        ${
-                          userPrompt
-                            ? `The user has provided specific focus areas: "${userPrompt}". Prioritize these in the generated tickets. No need of All Features`
-                            : "No specific user focus provided. Generate a comprehensive backlog based on the PRD."
-                        }
+                        ${userPrompt
+        ? `The user has provided specific focus areas: "${userPrompt}". Prioritize these in the generated tickets. No need of All Features`
+        : "No specific user focus provided. Generate a comprehensive backlog based on the PRD."
+      }
                         ### Hierarchy Example:
                         JSON:
                         {
@@ -195,7 +228,10 @@ Return ONLY valid JSON that matches the required schema. Do not include any expl
       return validated;
     }
   } catch (error) {
-    console.error("Error processing PRD:", error?.message || error);
-    throw new Error("Failed to generate structured suggestions from PRD.");
+    console.error("Error processing PRD:", error);
+    if (error instanceof Error) {
+      console.error("Stack:", error.stack);
+    }
+    throw new Error(`Failed to generate structured suggestions: ${error.message}`);
   }
 };

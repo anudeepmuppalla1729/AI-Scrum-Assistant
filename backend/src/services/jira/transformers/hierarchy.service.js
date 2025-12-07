@@ -35,7 +35,13 @@ export async function pushAISuggestionsHierarchy({ projectKey, suggestions }) {
         key: epicIssue.key,
         summary: epic.title,
       });
+      created.epics.push({
+        id: epicIssue.id,
+        key: epicIssue.key,
+        summary: epic.title,
+      });
     } catch (err) {
+      console.error(`Failed to create Epic "${epic.title}":`, err?.response?.data || err.message);
       errors.push({
         level: "epic",
         summary: epic?.title,
@@ -65,6 +71,7 @@ export async function pushAISuggestionsHierarchy({ projectKey, suggestions }) {
           parentEpicKey: epicIssue.key,
         });
       } catch (err) {
+        console.error(`Failed to create Story "${issue.summary}":`, err?.response?.data || err.message);
         errors.push({
           level: "story",
           parentSummary: epic?.title,
@@ -95,6 +102,7 @@ export async function pushAISuggestionsHierarchy({ projectKey, suggestions }) {
             parentStoryKey: storyIssue.key,
           });
         } catch (err) {
+          console.error(`Failed to create Subtask "${sub.summary}":`, err?.response?.data || err.message);
           errors.push({
             level: "subtask",
             parentSummary: issue?.summary,
