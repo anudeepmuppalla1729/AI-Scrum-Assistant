@@ -50,6 +50,7 @@ export const pushAISuggestionsToJira = async (req, res) => {
   } catch (error) {
     const zodIssues = error?.issues || error?.errors;
     if (zodIssues) {
+      console.error("Validation Error:", JSON.stringify(zodIssues, null, 2));
       return res.status(400).json({
         success: false,
         error: "Invalid request body",
@@ -64,25 +65,65 @@ export const pushAISuggestionsToJira = async (req, res) => {
   }
 };
 
+import ChatSession from "../models/ChatSession.js";
+
 export const chatWithScrumMaster = async (req, res) => {
   try {
-    const { query } = req.body;
-    if (!query) {
-      return res.status(400).json({ error: "Query is required." });
+    const { message } = req.body;
+    // Assuming user is authenticated and req.user exists (set by auth middleware)
+    // If not, we might need to handle anonymous or pass userId in body, but let's assume req.user._id
+    const userId = req.user?._id;
+
+    if (!message) {
+      return res.status(400).json({ error: "Message is required." });
     }
 
-    const answer = await chatWithAI(query);
+    const answer = await chatWithAI(message);
+
+    // Save to DB if user is authenticated
+    if (userId) {
+      // Find latest session or create new (simplified: single session per user for now, or just append)
+      // For this feature, let's keep it simple: one massive chat log per user or a daily session?
+      // Let's do: Find a session for today, or just one single session for now.
+      // Better: Just one session document for the "Main Chat".
+
+      let session = await ChatSession.findOne({ userId });
+      if (!session) {
+        session = new ChatSession({ userId, messages: [] });
+      }
+
+      session.messages.push({ role: "user", content: message });
+      session.messages.push({ role: "assistant", content: answer });
+      await session.save();
+    }
 
     return res.status(200).json({
-      success: true,
-      answer,
+      reply: answer,
+      intent: "chat", // Default intent for now
+      issues: [],
     });
   } catch (error) {
     console.error("Error in chatWithScrumMaster:", error);
     return res.status(500).json({
-      success: false,
       error: "Failed to process chat query.",
     });
+  }
+};
+
+export const getChatHistory = async (req, res) => {
+  try {
+    const userId = req.user?._id;
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const session = await ChatSession.findOne({ userId });
+    return res.status(200).json({
+      history: session ? session.messages : [],
+    });
+  } catch (error) {
+    console.error("Error fetching chat history:", error);
+    return res.status(500).json({ error: "Failed to fetch chat history" });
   }
 };
 
