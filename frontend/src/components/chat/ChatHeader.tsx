@@ -6,8 +6,7 @@ interface ChatHeaderProps {
 }
 
 export const ChatHeader: React.FC<ChatHeaderProps> = ({ loading }) => {
-    const { workspace } = useWorkspaceStore();
-    const { boardName, sprintName } = workspace || {};
+    const { boardId, sprintId } = useWorkspaceStore();
 
     return (
         <header className="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4">
@@ -22,7 +21,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ loading }) => {
                 <div className="text-right hidden sm:block">
                     <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Workspace</p>
                     <p className="text-sm text-gray-700">
-                        {boardName ? `${boardName}` : "No Board"} · {sprintName ? `${sprintName}` : "No Sprint"}
+                        {boardId ? `Board ${boardId}` : "No Board"} · {sprintId ? `Sprint ${sprintId}` : "No Sprint"}
                     </p>
                 </div>
 

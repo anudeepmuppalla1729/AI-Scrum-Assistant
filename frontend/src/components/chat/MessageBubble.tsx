@@ -16,7 +16,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
                     : "bg-gray-200 text-gray-800 rounded-bl-none"
                     }`}
             >
-                <p className="whitespace-pre-wrap">{message.content}</p>
+                <p className="whitespace-pre-wrap">{message.text}</p>
             </div>
         </div>
     );
