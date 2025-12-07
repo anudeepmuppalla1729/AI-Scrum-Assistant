@@ -1,5 +1,5 @@
-import { PRDParserSchema } from "../../utils/schemas.js";
 import { PdfReader } from "pdfreader";
+import { PRDParserSchema } from "../../utils/schemas.js";
 import dotenv from "dotenv";
 import { model } from "../ai/model.service.js";
 import { upsertPRD } from "./rag.service.js";

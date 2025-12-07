@@ -13,11 +13,7 @@ import jiraIssueCreateRoutes from "./routes/jiraIssueCreate.routes.js";
 
 const app = express();
 
-app.use(cors({
-  origin: "*",
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
-}));
+app.use(cors());
 app.use(express.json({ limit: "10mb" })); // Allows larger payloads
 app.use("/auth", authRoutes);
 app.use("/auth/jira", jiraRoutes);

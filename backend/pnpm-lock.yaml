@@ -1938,8 +1938,7 @@ snapshots:
   '@types/node-fetch@2.6.13':
     dependencies:
       '@types/node': 18.19.130
-      form-data: 4.0.5
-      form-data: 4.0.5
+      form-data: 4.0.4
 
   '@types/node@18.19.130':
     dependencies:
@@ -2366,12 +2365,10 @@ snapshots:
       axios: 1.13.2(debug@4.4.3)
       camelcase: 6.3.0
       debug: 4.4.3(supports-color@5.5.0)
-      dotenv: 16.6.1
-      dotenv: 16.6.1
+      dotenv: 16.4.5
       extend: 3.0.2
       file-type: 16.5.4
-      form-data: 4.0.5
-      form-data: 4.0.5
+      form-data: 4.0.4
       isstream: 0.1.2
       jsonwebtoken: 9.0.3
       mime-types: 2.1.35
