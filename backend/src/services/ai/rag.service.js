@@ -14,7 +14,7 @@ const client = new ChromaClient({
 // Initialize Embeddings
 const embeddings = new GoogleGenerativeAIEmbeddings({
   apiKey: process.env.GOOGLE_API_KEY,
-  modelName: "text-embedding-004", // or text-embedding-004
+  modelName: "gemini-embedding-001", // or text-embedding-004
 });
 
 let collection;
