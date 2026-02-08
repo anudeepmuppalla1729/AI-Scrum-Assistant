@@ -7,7 +7,7 @@ interface ChatHeaderProps {
 
 export const ChatHeader: React.FC<ChatHeaderProps> = ({ loading }) => {
     const { workspace } = useWorkspaceStore();
-    const { boardName, sprintName } = workspace || {};
+    const { boardName} = workspace || {};
 
     return (
         <header className="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4">
