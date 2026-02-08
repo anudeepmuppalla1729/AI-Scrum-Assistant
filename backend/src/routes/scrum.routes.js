@@ -16,6 +16,7 @@ import {
   renameSession,
   deleteSession,
   sendMessage,
+  getMessages,
 } from "../controllers/chat.controller.js";
 
 const storage = multer.memoryStorage();
@@ -138,29 +139,8 @@ router.delete("/chat/session/:sessionId", auth, deleteSession);
  *       200:
  *         description: Message sent and AI response received
  */
+router.get("/chat/:sessionId/messages", auth, getMessages);
 router.post("/chat/:sessionId", auth, sendMessage);
-
-/**
- * @openapi
- * /api/v1/scrum/chat/{sessionId}/messages:
- *   get:
- *     summary: Get messages for a session
- *     tags:
- *       - Scrum
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               message:
- *                 type: string
- *     responses:
- *       200:
- *         description: List of messages
- */
-router.post("/chat", chatWithScrumMaster);
 
 /**
  * @openapi
@@ -174,7 +154,6 @@ router.post("/chat", chatWithScrumMaster);
  *         description: Chat history
  */
 router.get("/chat/history", getChatHistory);
-
 
 /**
  * @openapi
