@@ -22,7 +22,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ loading }) => {
                 <div className="text-right hidden sm:block">
                     <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Workspace</p>
                     <p className="text-sm text-gray-700">
-                        {boardName ? `${boardName}` : "No Board"} · {sprintName ? `${sprintName}` : "No Sprint"}
+                        {boardName ? `${boardName}` : "No Board"}
                     </p>
                 </div>
 

@@ -1,28 +1,28 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 interface Workspace {
-    boardId: number;
-    boardName: string;
-    sprintId: number;
-    sprintName: string;
+  boardId: number;
+  boardName: string;
+  sprintId: number | null;
+  sprintName: string | null;
 }
 
 interface WorkspaceState {
-    workspace: Workspace | null;
-    setWorkspace: (workspace: Workspace) => void;
-    clearWorkspace: () => void;
+  workspace: Workspace | null;
+  setWorkspace: (workspace: Workspace) => void;
+  clearWorkspace: () => void;
 }
 
 export const useWorkspaceStore = create<WorkspaceState>()(
-    persist(
-        (set) => ({
-            workspace: null,
-            setWorkspace: (workspace) => set({ workspace }),
-            clearWorkspace: () => set({ workspace: null }),
-        }),
-        {
-            name: 'workspace', // key in localStorage
-        }
-    )
+  persist(
+    (set) => ({
+      workspace: null,
+      setWorkspace: (workspace) => set({ workspace }),
+      clearWorkspace: () => set({ workspace: null }),
+    }),
+    {
+      name: "workspace", // key in localStorage
+    },
+  ),
 );
