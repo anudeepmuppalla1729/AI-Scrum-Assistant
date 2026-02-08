@@ -169,7 +169,7 @@ const PRDGeneratorPage: React.FC = () => {
                 mainArea={
                     <div className="flex flex-1 overflow-hidden">
                         {/* LEFT PANEL: Input */}
-                        <div className="w-[400px] flex-shrink-0 flex flex-col border-r border-gray-200 bg-white overflow-y-auto">
+                        <div className="w-[400px] shrink-0 flex flex-col border-r border-gray-200 bg-white overflow-y-auto">
                             <div className="p-6 space-y-8">
                                 {/* Header */}
                                 <div>
