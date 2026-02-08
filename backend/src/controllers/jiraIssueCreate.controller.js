@@ -11,17 +11,26 @@ export const createIssue = async (req, res) => {
 
     const url = `https://api.atlassian.com/ex/jira/${user.cloudId}/rest/api/3/issue`;
 
-    const response = await axios.post(url, { fields }, {
-      headers: {
-        Authorization: `Bearer ${user.jiraTokens.accessToken}`,
-        Accept: "application/json",
-        "Content-Type": "application/json"
-      }
-    });
+    const response = await axios.post(
+      url,
+      { fields },
+      {
+        headers: {
+          Authorization: `Bearer ${user.jiraTokens.accessToken}`,
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+      },
+    );
 
     return res.json(response.data);
-
   } catch (err) {
+    if (err.response?.status === 401) {
+      console.error("Jira Access Token Expired or Invalid");
+      return res
+        .status(401)
+        .json({ error: "Jira session expired. Please login again." });
+    }
     console.error("Issue Create Error:", err.response?.data || err);
     res.status(500).json({ error: "Failed to create Jira issue" });
   }

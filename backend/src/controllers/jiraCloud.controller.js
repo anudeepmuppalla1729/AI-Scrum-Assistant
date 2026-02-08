@@ -15,9 +15,9 @@ export const fetchCloudId = async (req, res) => {
       "https://api.atlassian.com/oauth/token/accessible-resources",
       {
         headers: {
-          Authorization: `Bearer ${user.jiraTokens.accessToken}`
-        }
-      }
+          Authorization: `Bearer ${user.jiraTokens.accessToken}`,
+        },
+      },
     );
 
     const resources = response.data;
@@ -37,10 +37,15 @@ export const fetchCloudId = async (req, res) => {
     return res.json({
       cloudId,
       siteName: resources[0].name,
-      url: resources[0].url
+      url: resources[0].url,
     });
-
   } catch (err) {
+    if (err.response?.status === 401) {
+      console.error("Jira Access Token Expired or Invalid");
+      return res
+        .status(401)
+        .json({ error: "Jira session expired. Please login again." });
+    }
     console.error(err.response?.data || err);
     return res.status(500).json({ error: "Failed to fetch cloudId" });
   }

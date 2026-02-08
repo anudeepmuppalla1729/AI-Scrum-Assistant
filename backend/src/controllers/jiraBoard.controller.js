@@ -27,6 +27,12 @@ export const getBoards = async (req, res) => {
 
     return res.json(response.data); // includes boards list
   } catch (err) {
+    if (err.response?.status === 401) {
+      console.error("Jira Access Token Expired or Invalid");
+      return res
+        .status(401)
+        .json({ error: "Jira session expired. Please login again." });
+    }
     console.error(err.response?.data || err);
     return res.status(500).json({ error: "Failed to fetch Jira boards" });
   }
