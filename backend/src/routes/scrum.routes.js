@@ -262,6 +262,25 @@ router.get("/prd/session/:sessionId", auth, getPRDSession);
 router.patch("/prd/session/:sessionId", auth, updatePRDSession);
 router.delete("/prd/session/:sessionId", auth, deletePRDSession);
 
+/**
+ * @openapi
+ * /api/v1/scrum/webhooks/jira:
+ *   post:
+ *     summary: Handle incoming Jira webhooks
+ *     tags:
+ *       - Webhooks
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             description: The Jira webhook payload
+ *     responses:
+ *       200:
+ *         description: Webhook processed successfully
+ *       500:
+ *         description: Failed to process webhook
+ */
 router.post("/webhooks/jira", handleJiraWebhook);
-
 export default router;
