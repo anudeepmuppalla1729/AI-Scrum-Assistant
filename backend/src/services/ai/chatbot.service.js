@@ -4,7 +4,7 @@ import { queryKnowledgeBase } from "./rag.service.js";
 export const chatWithAI = async (userQuery, sessionId = "1") => {
   try {
     // 1. Retrieve RAG context
-    const contextDocs = await queryKnowledgeBase(userQuery, 10);
+    const contextDocs = await queryKnowledgeBase(userQuery, 5);
 
     const contextText = contextDocs
       .map((doc) => `[${doc.metadata.type.toUpperCase()}] ${doc.content}`)
