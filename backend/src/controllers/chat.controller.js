@@ -89,7 +89,7 @@ export const getMessages = async (req, res) => {
       return res.status(404).json({ error: "Session not found." });
     }
 
-    const messages = await ChatMessage.find({ sessionId }).sort({
+    let messages = await ChatMessage.find({ sessionId }).sort({
       createdAt: 1,
     });
     res.status(200).json(messages);
@@ -123,12 +123,16 @@ export const sendMessage = async (req, res) => {
     });
     await userMsg.save();
 
+    const historyDocs = await ChatMessage.find({ sessionId }).sort({
+      createdAt: 1,
+    });
+
+    const conversationHistory = historyDocs.map((msg) => ({
+      role: msg.role,
+      content: msg.content,
+    }));
     // 2. Generate AI Response
-    // For context, we might want to fetch last N messages.
-    // For now, let's keep it simple or fetch the history to pass to context if needed?
-    // The `chatWithAI` service might just take a string.
-    // If it supports history, we should fetch it here.
-    const answer = await chatWithAI(message);
+    const answer = await chatWithAI(message, conversationHistory);
 
     // 3. Save Assistant Message
     const assistantMsg = new ChatMessage({
