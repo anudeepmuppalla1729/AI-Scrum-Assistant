@@ -20,9 +20,9 @@ export const JiraPushBar: React.FC<JiraPushBarProps> = ({
 
   return (
     <div className="absolute bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-gray-200 shadow-lg animate-in slide-in-from-bottom-4 duration-300 z-10">
-      <div className="flex items-center justify-between max-w-full mx-auto">
-        <div className="flex flex-col">
-          <span className="text-xs text-gray-500 font-semibold uppercase tracking-wider">
+      <div className="flex items-center justify-between max-w-full mx-auto flex-wrap gap-4">
+        <div className="flex flex-col min-w-0">
+          <span className="text-xs text-gray-500 font-semibold uppercase tracking-wider truncate">
             Selected Items
           </span>
           <div className="flex items-center text-sm font-medium text-gray-900 space-x-1">

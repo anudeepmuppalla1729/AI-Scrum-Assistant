@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CheckSquare, Square, ChevronRight } from 'lucide-react';
+import { CheckSquare, Square } from 'lucide-react';
 import type { TaskSuggestion } from '../../types/prd.types';
 
 interface TaskItemProps {
@@ -40,7 +40,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, isSelected, onToggle, 
 
             <button
                 onClick={onToggle}
-                className="mt-0.5 mr-3 flex-shrink-0 text-gray-400 hover:text-blue-500 transition-colors focus:outline-none"
+                className="mt-0.5 mr-3 shrink-0 text-gray-400 hover:text-blue-500 transition-colors focus:outline-none"
             >
                 {isSelected ? (
                     <CheckSquare className="w-4 h-4 text-blue-500" />
@@ -51,7 +51,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, isSelected, onToggle, 
 
             <div className="flex-1 min-w-0">
                 <div className="flex items-center space-x-2">
-                    <span className="text-xs font-mono text-gray-400 uppercase tracking-wider flex-shrink-0">Task</span>
+                    <span className="text-xs font-mono text-gray-400 uppercase tracking-wider shrink-0">Task</span>
                     {isEditing ? (
                         <input
                             type="text"
@@ -60,14 +60,16 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, isSelected, onToggle, 
                             onBlur={handleBlur}
                             onKeyDown={handleKeyDown}
                             autoFocus
-                            className="flex-1 text-sm text-gray-900 border-none p-0 focus:ring-0 bg-transparent placeholder-gray-400"
+                            className="flex-1 text-sm text-gray-900 border-none p-0 focus:ring-0 bg-transparent placeholder-gray-400 min-w-0"
+                            placeholder="Enter task summary"
                         />
                     ) : (
                         <span
                             onClick={() => setIsEditing(true)}
-                            className="text-sm text-gray-700 truncate cursor-text hover:text-gray-900"
+                            className="text-sm text-gray-700 truncate cursor-text hover:text-gray-900 flex-1 min-h-[20px] min-w-0"
+                            title={task.summary}
                         >
-                            {task.summary}
+                            {task.summary || <span className="text-gray-400 italic">Empty task summary (click to edit)</span>}
                         </span>
                     )}
                 </div>

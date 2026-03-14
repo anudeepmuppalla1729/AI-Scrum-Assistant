@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Layers, ChevronRight, ChevronDown, CheckSquare, Square } from 'lucide-react';
+import { ChevronRight, ChevronDown, CheckSquare, Square } from 'lucide-react';
 import type { EpicSuggestion, StorySuggestion, TaskSuggestion } from '../../types/prd.types';
 import { StoryItem } from './StoryItem';
 import { usePRDSelection } from '../../hooks/usePRDSelection';
@@ -83,14 +83,16 @@ export const EpicSection: React.FC<EpicSectionProps> = ({
                                     onChange={(e) => setTitle(e.target.value)}
                                     onBlur={handleBlur}
                                     autoFocus
-                                    className="w-full text-base font-semibold text-gray-900 border-none p-0 focus:ring-0 bg-transparent"
+                                    className="w-full text-base font-semibold text-gray-900 border-none p-0 focus:ring-0 bg-transparent placeholder-gray-400"
+                                    placeholder="Enter epic title"
                                 />
                             ) : (
                                 <h3
                                     onClick={() => setIsEditing(true)}
-                                    className="text-base font-semibold text-gray-900 truncate cursor-text hover:text-blue-600 transition-colors"
+                                    className="text-base font-semibold text-gray-900 truncate cursor-text hover:text-blue-600 transition-colors min-h-[24px]"
+                                    title={epic.title}
                                 >
-                                    {epic.title}
+                                    {epic.title || <span className="text-gray-400 italic font-normal">Empty epic title (click to edit)</span>}
                                 </h3>
                             )}
                         </div>

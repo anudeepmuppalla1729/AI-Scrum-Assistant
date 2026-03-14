@@ -77,9 +77,15 @@ export const usePRDSelection = (epics: EpicSuggestion[]) => {
     const toggleStory = (epicIndex: number, storyIndex: number) => {
         setSelection(prev => {
             const newState = { ...prev };
+            // Deep clone the epic to avoid mutating the original object
+            newState[epicIndex] = {
+                ...newState[epicIndex],
+                stories: { ...newState[epicIndex].stories }
+            };
+
             const isSelected = !newState[epicIndex].stories[storyIndex]?.selected;
 
-            // Toggle story
+            // Toggle story and reset tasks
             newState[epicIndex].stories[storyIndex] = {
                 selected: isSelected,
                 tasks: {}
@@ -90,11 +96,6 @@ export const usePRDSelection = (epics: EpicSuggestion[]) => {
                 newState[epicIndex].stories[storyIndex].tasks[taskIndex] = isSelected;
             });
 
-            // Check parent Epic state (optional: could auto-uncheck parent if child unchecked)
-            // For now, allow mixed states where parent remains "selected" even if some children are not.
-            // But strict hierarchy usually implies parent is container. 
-            // We'll keep it simple: Parent selection is manual or strictly "downward" propogating.
-
             return newState;
         });
     };
@@ -102,8 +103,35 @@ export const usePRDSelection = (epics: EpicSuggestion[]) => {
     const toggleTask = (epicIndex: number, storyIndex: number, taskIndex: number) => {
         setSelection(prev => {
             const newState = { ...prev };
-            const currentVal = newState[epicIndex].stories[storyIndex].tasks[taskIndex];
-            newState[epicIndex].stories[storyIndex].tasks[taskIndex] = !currentVal;
+            
+            if (!newState[epicIndex] || !newState[epicIndex].stories[storyIndex]) {
+                return prev;
+            }
+            
+            // Deep clone all the way down
+            const oldStory = newState[epicIndex].stories[storyIndex];
+            const currentTaskVal = oldStory.tasks[taskIndex];
+            
+            const newTasks = { 
+                ...oldStory.tasks,
+                [taskIndex]: !currentTaskVal
+            };
+            
+            // Auto-check the story if ANY task is selected, uncheck if ALL are deselected
+            const anyTaskSelected = Object.values(newTasks).some(Boolean);
+
+            newState[epicIndex] = {
+                ...newState[epicIndex],
+                stories: {
+                    ...newState[epicIndex].stories,
+                    [storyIndex]: {
+                        ...oldStory,
+                        selected: anyTaskSelected,
+                        tasks: newTasks
+                    }
+                }
+            };
+
             return newState;
         });
     };

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CheckSquare, Square, ChevronRight, ChevronDown, Check } from 'lucide-react';
+import { CheckSquare, Square, ChevronRight, ChevronDown } from 'lucide-react';
 import type { StorySuggestion, TaskSuggestion } from '../../types/prd.types';
 import { TaskItem } from './TaskItem';
 
@@ -101,24 +101,26 @@ export const StoryItem: React.FC<StoryItemProps> = ({
                                     onChange={(e) => setSummary(e.target.value)}
                                     onBlur={handleBlur}
                                     autoFocus
-                                    className="w-full text-sm font-medium text-gray-900 border-none p-0 focus:ring-0 bg-transparent"
+                                    className="w-full text-sm font-medium text-gray-900 border-none p-0 focus:ring-0 bg-transparent placeholder-gray-400"
+                                    placeholder="Enter story summary"
                                 />
                             ) : (
                                 <h4
                                     onClick={() => setIsEditing(true)}
-                                    className="text-sm font-medium text-gray-900 truncate cursor-text"
+                                    className="text-sm font-medium text-gray-900 truncate cursor-text min-h-[20px]"
+                                    title={story.summary}
                                 >
-                                    {story.summary}
+                                    {story.summary || <span className="text-gray-400 italic font-normal">Empty story summary (click to edit)</span>}
                                 </h4>
                             )}
                         </div>
-                        <div className="flex items-center text-xs text-gray-400 space-x-3">
+                        <div className="flex items-center text-xs text-gray-400 space-x-3 shrink-0">
                             {story.story_points && (
-                                <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600 font-medium">
+                                <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600 font-medium whitespace-nowrap">
                                     {story.story_points} pts
                                 </span>
                             )}
-                            <span>{story.priority || 'Medium'}</span>
+                            <span className="whitespace-nowrap">{story.priority || 'Medium'}</span>
                         </div>
                     </div>
                 </div>
@@ -127,16 +129,19 @@ export const StoryItem: React.FC<StoryItemProps> = ({
             {/* Children Tasks */}
             {isExpanded && hasTasks && (
                 <div className="ml-6 pl-2 border-l border-transparent"> {/* Offset for children */}
-                    {story.sub_issues.map((task, index) => (
-                        <TaskItem
-                            key={index}
-                            task={task}
-                            isSelected={!!selectionState.tasks?.[index] || isSelected}
-                            onToggle={() => onToggleTask(index)}
-                            onUpdate={(updates) => onUpdateTask(index, updates)}
-                            isLast={index === (story.sub_issues?.length || 0) - 1}
-                        />
-                    ))}
+                    {story.sub_issues.map((task, index) => {
+                        const isTaskSelected = selectionState?.tasks?.[index];
+                        return (
+                            <TaskItem
+                                key={index}
+                                task={task}
+                                isSelected={isTaskSelected !== undefined ? isTaskSelected : isSelected}
+                                onToggle={() => onToggleTask(index)}
+                                onUpdate={(updates) => onUpdateTask(index, updates)}
+                                isLast={index === (story.sub_issues?.length || 0) - 1}
+                            />
+                        );
+                    })}
                 </div>
             )}
         </div>

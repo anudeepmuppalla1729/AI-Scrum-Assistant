@@ -19,7 +19,7 @@ const ModeBar: React.FC = () => {
         isActive={location.pathname === "/sprints"}
       />
       <ModeNavItem
-        label="PRD Generator"
+        label="Backlog Generator"
         path="/prd"
         isActive={location.pathname === "/prd"}
       />

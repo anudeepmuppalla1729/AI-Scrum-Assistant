@@ -12,12 +12,14 @@ import PRDHistorySidebar from '../components/prd/PRDHistorySidebar';
 import { usePRDGenerator, type GeneratorOptions } from '../hooks/usePRDGenerator';
 import { usePRDSelection } from '../hooks/usePRDSelection';
 import type { EpicSuggestion } from '../types/prd.types';
+import { useWorkspaceStore } from '../store/useWorkspaceStore';
 
 import { getPRDSessions } from '../api/scrumApi';
 
 const PRDGeneratorPage: React.FC = () => {
     const { sessionId } = useParams();
     const navigate = useNavigate();
+    const workspace = useWorkspaceStore((state) => state.workspace);
 
     // Generator State (Upload, AI Processing)
     const {
@@ -128,8 +130,14 @@ const PRDGeneratorPage: React.FC = () => {
                 return null;
             }).filter(Boolean) as EpicSuggestion[];
 
-            // TODO: Get project key from dropdown or workspace
-            const projectKey = 'SCRUM';
+            // Get project key from dropdown or workspace
+            const projectKey = workspace?.projectKey;
+
+            if (!projectKey) {
+                alert("No project key found in workspace. Please re-select workspace.");
+                setIsPushModalOpen(false);
+                return;
+            }
 
             await pushToJira(projectKey, filteredEpics);
             setIsPushModalOpen(false);
@@ -173,7 +181,7 @@ const PRDGeneratorPage: React.FC = () => {
                             <div className="p-6 space-y-8">
                                 {/* Header */}
                                 <div>
-                                    <h1 className="text-xl font-bold text-gray-900">PRD Generator</h1>
+                                    <h1 className="text-xl font-bold text-gray-900">Backlog Generator</h1>
                                     <p className="text-sm text-gray-500">From PDF to Jira Tickets.</p>
                                 </div>
 
@@ -212,8 +220,8 @@ const PRDGeneratorPage: React.FC = () => {
                         </div>
 
                         {/* RIGHT PANEL: Output */}
-                        <div className="flex-1 flex flex-col relative bg-[#f8f9fb]">
-                            <div className="flex-1 overflow-hidden relative">
+                        <div className="flex-1 min-w-0 flex flex-col relative bg-[#f8f9fb]">
+                            <div className="flex-1 overflow-hidden relative min-w-0">
                                 <OutputPanel
                                     epics={epics}
                                     isLoading={generatorState === 'processing'}

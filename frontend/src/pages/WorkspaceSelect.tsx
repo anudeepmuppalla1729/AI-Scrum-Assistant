@@ -52,6 +52,7 @@ export const WorkspaceSelect: React.FC = () => {
       boardName: board.name,
       sprintId: null,
       sprintName: null,
+      projectKey: board.location?.projectKey || null,
     });
     navigate("/chat");
   };

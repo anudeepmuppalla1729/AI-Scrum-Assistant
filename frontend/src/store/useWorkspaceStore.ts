@@ -6,6 +6,7 @@ interface Workspace {
   boardName: string;
   sprintId: number | null;
   sprintName: string | null;
+  projectKey: string | null;
 }
 
 interface WorkspaceState {
