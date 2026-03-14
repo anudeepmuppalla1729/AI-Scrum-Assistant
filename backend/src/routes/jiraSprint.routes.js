@@ -9,6 +9,7 @@ const router = Router();
  * /auth/jira/boards/{boardId}/sprints:
  *   get:
  *     summary: Get sprints for a specific Jira board
+ *     description: Retrieves all active and future sprints associated with a specific Jira board. Used to populate sprint selection dropdowns.
  *     tags:
  *       - Jira Sprints
  *     security:
@@ -18,15 +19,40 @@ const router = Router();
  *         name: boardId
  *         required: true
  *         schema:
- *           type: string
- *         description: The ID of the board
+ *           type: integer
+ *         description: The internal numerical ID of the Jira board.
  *     responses:
  *       200:
- *         description: List of sprints for the board
+ *         description: A JSON array of Jira sprints.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                     example: 5
+ *                   state:
+ *                     type: string
+ *                     example: "active"
+ *                     description: The current status of the sprint (e.g., active, future, closed).
+ *                   name:
+ *                     type: string
+ *                     example: "Sprint 42"
+ *                   startDate:
+ *                     type: string
+ *                     format: date-time
+ *                     example: "2024-03-01T09:00:00.000Z"
+ *                   endDate:
+ *                     type: string
+ *                     format: date-time
+ *                     example: "2024-03-15T17:00:00.000Z"
  *       401:
- *         description: Unauthorized
+ *         description: Unauthorized. Jira access token expired.
  *       500:
- *         description: Server error retrieving sprints
+ *         description: Server error retrieving sprints.
  */
 router.get("/boards/:boardId/sprints", auth, getSprints);
 

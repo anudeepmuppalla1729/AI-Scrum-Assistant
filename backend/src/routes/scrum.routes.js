@@ -267,6 +267,7 @@ router.delete("/prd/session/:sessionId", auth, deletePRDSession);
  * /api/v1/scrum/webhooks/jira:
  *   post:
  *     summary: Handle incoming Jira webhooks
+ *     description: Endpoint configured in Jira to receive real-time updates when issues are created, updated, or deleted. Requires a specific payload format defined by Atlassian.
  *     tags:
  *       - Webhooks
  *     requestBody:
@@ -275,12 +276,25 @@ router.delete("/prd/session/:sessionId", auth, deletePRDSession);
  *         application/json:
  *           schema:
  *             type: object
- *             description: The Jira webhook payload
+ *             properties:
+ *               webhookEvent:
+ *                 type: string
+ *                 example: "jira:issue_updated"
+ *                 description: The event that triggered the webhook.
+ *               issue:
+ *                 type: object
+ *                 description: The updated Jira issue data.
+ *                 properties:
+ *                   id: 
+ *                     type: string
+ *                   key:
+ *                     type: string
+ *                     example: "SCRUM-10"
  *     responses:
  *       200:
- *         description: Webhook processed successfully
+ *         description: Webhook processed successfully. Returns immediately to prevent Jira from timing out.
  *       500:
- *         description: Failed to process webhook
+ *         description: Failed to process or parse webhook payload.
  */
 router.post("/webhooks/jira", handleJiraWebhook);
 export default router;
