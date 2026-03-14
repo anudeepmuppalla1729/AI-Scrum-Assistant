@@ -5,7 +5,7 @@ import hunterAlpha from "./hunterAlpha.js";
 export const chatWithAI = async (userQuery, conversationHistory) => {
   try {
     // 1. Retrieve RAG context
-    const contextDocs = await queryKnowledgeBase(userQuery, 5);
+    const contextDocs = await queryKnowledgeBase(userQuery, 10);
 
     const contextText = contextDocs
       .map((doc) => `[${doc.metadata.type.toUpperCase()}] ${doc.content}`)
