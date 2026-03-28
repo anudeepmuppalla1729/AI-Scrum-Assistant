@@ -132,7 +132,7 @@ export const sendMessage = async (req, res) => {
       content: msg.content,
     }));
     // 2. Generate AI Response
-    const answer = await chatWithAI(message, conversationHistory);
+    const answer = await chatWithAI(message, conversationHistory, sessionId);
 
     // 3. Save Assistant Message
     const assistantMsg = new ChatMessage({
