@@ -67,7 +67,7 @@ export const createIssueWithRetry = async (issuePayload, options = {}) => {
 
 const _createMetaCache = new Map();
 
-export const getCreateMetaForProject = async (projectKey) => {
+const getCreateMetaForProject = async (projectKey) => {
   const cacheKey = projectKey;
   if (_createMetaCache.has(cacheKey)) return _createMetaCache.get(cacheKey);
 
