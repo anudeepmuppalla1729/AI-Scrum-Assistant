@@ -1,235 +1,184 @@
-# AI Scrum Assistant (Development Stage)
+# AI Scrum Assistant
 
 _A Multi-Agent, AI-Powered Scrum Companion for Jira_
 
-> A full-stack, agentic AI system that automates backlog refinement, PRD parsing, and sprint planning — built with Node.js, LangChain.js, Google Gemini, Jira API, and a React-based Human-in-the-Loop (HITL) dashboard.
+> A full-stack, agentic AI system that automates backlog refinement, PRD parsing, sprint planning, and chat-based agile management — built with Node.js, LangChain.js, Google Gemini, Mongoose, Jira OAuth (3LO), and a modern React 19 frontend.
 
 ---
 
-## Overview
+## 🎯 Overview
 
-The **AI Scrum Assistant** is a modern, agentic application designed to act as a _virtual Scrum Master_ — simplifying Agile workflows by combining AI orchestration, Jira integration, and semantic intelligence.
+The **AI Scrum Assistant** is a modern, multi-agent application designed to act as a *virtual Scrum Master*. By leveraging LLMs alongside your Jira workspace, it minimizes administrative overhead, helping Agile teams focus on delivering value rather than writing tickets or analyzing sprint metrics manually.
 
-Built for MERN developers exploring next-gen AI orchestration, this assistant:
+### Core Value Proposition
 
-- Converts **Product Requirement Documents (PRDs)** into actionable Jira stories.
-- Analyzes existing **backlogs and sprints** to suggest improvements.
-- Plans **data-driven sprints** based on historical velocity.
-- Uses **semantic search (RAG)** to detect duplicates and refine backlog quality.
-- Presents results in a **React + Shadcn/ui dashboard** where humans approve or reject AI suggestions.
-
----
-
-## Core Architecture
-
-The system follows a **Multi-Agent (Compound AI)** architecture — with an _Orchestrator backend_ managing specialized agents/tools.
-
-### Components
-
-| Component                      | Description                                                                     |
-| ------------------------------ | ------------------------------------------------------------------------------- |
-| **React + Vite Frontend**      | Human-in-the-Loop dashboard for reviewing AI output and approving Jira actions. |
-| **Node.js + Express Backend**  | Orchestration layer coordinating AI services, Jira APIs, and vector DB.         |
-| **LangChain.js Orchestration** | Core AI framework managing LLM prompts, chains, and structured outputs.         |
-| **Google Gemini API**          | Primary LLM used for reasoning, text parsing, and sprint analysis.              |
-| **Jira REST API (jira.js)**    | Integration for reading/writing tickets, velocity, and backlog data.            |
-| **Chroma Vector DB**           | Used for semantic duplicate detection (RAG search).                             |
+- **Zero-Friction Authentication**: Uses native Atlassian OAuth 2.0 (3LO) for secure, token-less sign-ins and multi-workspace support.
+- **Document to Backlog Generation**: Converts Product Requirement Documents (PRDs) including PDFs into actionable, hierarchical Jira Epics, Stories, and Tasks with one click.
+- **Context-Aware AI Chat**: Engage with an intelligent assistant to summarize sprints, query tickets, or debug Agile blockers, featuring saved sessions.
+- **Sprint Intelligence**: Delivers sprint metrics, daily standup summaries, and AI-driven retrospective reports based on historical Jira operations.
 
 ---
 
-## Tech Stack
+## 🏗️ Core Architecture & Tech Stack
 
-| Layer        | Technology                                            | Purpose                                             |
-| ------------ | ----------------------------------------------------- | --------------------------------------------------- |
-| Backend      | **Node.js + Express (ESM)**                           | Non-blocking orchestrator for AI + API workflows    |
-| AI Layer     | **LangChain.js + Zod**                                | Structured JSON output and multi-step orchestration |
-| LLM Provider | **Google Gemini 2.0 Flash**                           | Tool-calling for PRD → Ticket parsing               |
-| Database     | **Chroma (via LangChain)**                            | Vector embeddings for semantic duplicate detection  |
-| Frontend     | **React + Vite + Shadcn/ui + React Query (TanStack)** | Modern HITL dashboard                               |
-| Integration  | **jira.js (Version3Client)**                          | Simplified Jira REST API access                     |
+The system follows a modern MERN-like stack supercharged by specialized AI orchestration agents.
 
----
+### Frontend
+- **Framework**: React 19 + Vite + TypeScript
+- **Styling**: Tailwind CSS v4
+- **State Management**: Zustand
+- **Routing**: React Router v7
+- **UI Icons & Markdown**: Lucide React, React Markdown
 
-## Authentication Setup
+### Backend
+- **Framework**: Node.js + Express (ESM)
+- **Database**: MongoDB (via Mongoose)
+- **Authentication**: JWT & Atlassian OAuth (3LO)
+- **API Clients**: `jira.js` for robust REST API interaction
 
-The system uses **API Token + Basic Auth** (recommended by Atlassian for personal/team tools).
-
-1. Generate a token at  
-   [Atlassian API Tokens](https://id.atlassian.com/manage-profile/security/api-tokens)
-2. Copy your Jira site name (`https://YOUR_ORG.atlassian.net`)
-3. Add credentials to `.env`:
-
-   ```
-   JIRA_EMAIL=your_email@domain.com
-   JIRA_API_TOKEN=your_api_token
-   JIRA_HOST=https://yourorg.atlassian.net
-   GOOGLE_API_KEY=your_google_gemini_key
-   ```
-
-4. **ChromaDB Setup (Docker):**
-   The application requires a running ChromaDB instance to store and retrieve knowledge base vectors.
-
-   Run the following command to start ChromaDB in a Docker container:
-
-   ```bash
-   docker run -d --name chroma -p 8000:8000 chromadb/chroma
-   ```
-
-   This will start the ChromaDB server on port 8000. The backend is configured to connect to `http://localhost:8000`.
-
-   _To stop the container:_
-
-   ```bash
-   docker stop chroma
-   ```
-
-   _To start it again:_
-
-   ```bash
-   docker start chroma
-   ```
+### AI Layer
+- **Orchestration**: LangChain.js (`@langchain/core`, `@langchain/langgraph`)
+- **LLM Providers**: Google Gemini (`@langchain/google-genai`), OpenRouter
+- **Vector Database**: ChromaDB (via LangChain for RAG and semantic duplicate detection)
+- **Parsers**: Zod (for structured outputs), `pdf-parse`
 
 ---
 
-## Installation & Setup
+## 🌟 Key Features
 
+1. **Atlassian OAuth Integration**
+   - Securely log in using your Jira account.
+   - Seamlessly switch between different Atlassian Cloud workspaces/boards.
+
+2. **PRD → Jira Ticket Generation Dashboard**
+   - Upload textual or PDF-based PRDs.
+   - AI automatically extracts and structures requirements into Jira hierarchies (Epics → Stories → Tasks).
+   - Review, modify, and push the generated tickets directly to your Jira backlog using a Human-in-the-Loop UI.
+   - Persisted PRD generation sessions via MongoDB.
+
+3. **Intelligent Chatbot Interface**
+   - A dedicated Chat space to ask the AI questions about your Jira projects.
+   - Chat history and separated sessions are saved so you never lose context.
+
+4. **Agile Reporting & Sprint Planning**
+   - Extracts sprint issues to calculate velocity, completion rates, and spillovers.
+   - **Daily Standups**: AI-generated standup reports synthesizing recent Jira status changes and comments.
+   - **Retrospectives**: Automated "What Went Well" and "Actionable Insights" structured templates analyzing closed sprints.
+
+---
+
+## 🔐 Setup & Installation
+
+### Prerequisites
+- **Node.js**: v18 or higher recommended.
+- **MongoDB**: A local instance or MongoDB Atlas cluster.
+- **Docker**: For running the ChromaDB vector server.
+- **Atlassian Developer App**: An app created in Atlassian Developer console with OAuth 2.0 (3LO) integration and required Jira REST API scopes.
+- **AI Keys**: A Google Gemini API Key and/or OpenRouter API Key.
+
+### 1. Vector Database Setup
+The AI semantic search modules rely on ChromaDB. Run ChromaDB using Docker on port 8000:
+```bash
+docker run -d --name chroma -p 8000:8000 chromadb/chroma
 ```
-# 1. Clone the repository
-git clone https://github.com/<your-username>/ai-scrum-assistant.git
-cd ai-scrum-assistant
+*(To stop: `docker stop chroma` | To start again: `docker start chroma`)*
 
-# 2. Install backend dependencies
+### 2. Environment Variables
+Create a `.env` file in the `backend/` directory based on the following template:
+
+```env
+# Server Configuration
+PORT=2000
+
+# Database Configuration
+MONGODB_URI=mongodb+srv://<username>:<password>@cluster...
+DB_NAME=ass-project
+
+# Authentication 
+JWT_SECRET=YOUR_SECURE_JWT_SECRET
+
+# Atlassian OAuth Application Credentials (3LO)
+ATLASSIAN_CLIENT_ID=your_atlassian_client_id
+ATLASSIAN_CLIENT_SECRET=your_atlassian_client_secret
+ATLASSIAN_REDIRECT_URI=http://localhost:5173/oauth/callback
+FRONTEND_SUCCESS_URL=http://localhost:5173/oauth/success
+
+# AI LLM Services
+GOOGLE_API_KEY=your_google_api_key
+OPENROUTER_API_KEY=your_openrouter_api_key
+
+# Optional legacy Jira settings
+JIRA_STORY_POINTS_FIELD=customfield_10016
+JIRA_EPIC_NAME_FIELD_ID=customfield_10011
+```
+
+### 3. Application Initialization
+Clone the repository and set up the independent frontend and backend services.
+
+**Terminal 1 (Backend):**
+```bash
 cd backend
 npm install
+npm run dev
+```
 
-# 3. Install frontend dependencies
-cd ../frontend
+**Terminal 2 (Frontend):**
+```bash
+cd frontend
 npm install
-
-# 4. Run the system (two terminals)
-npm run dev          # frontend (Vite)
-npm run server       # backend (Express)
+npm run dev
 ```
+
+Access the application in your browser at `http://localhost:5173` (or the port Vite designates).
 
 ---
 
-## Key Features
+## 📂 Project Structure
 
-1️. **PRD → Jira Ticket Generation**
-
-- Upload PRD → AI converts to structured Jira stories using Gemini + LangChain.
-- Validated against a **Zod schema**.
-
-2️. **AI-Powered Backlog Refinement**
-
-- Detects **duplicates** with semantic RAG search.
-- Finds **missing ACs** or **split suggestions**.
-
-3️. **Data-Driven Sprint Planning**
-
-- Calculates **velocity & spillover** using Jira API.
-- Suggests realistic sprint backlog.
-
-4. **Sprint Retrospectives & Reporting**
-
-- Analyzes the results of a closed sprint to auto-generate a summary of progress, burndown stats, and structured **"What Went Well" / "Actionable Insight"** reports.
-- **Data Aggregation and Qualitative Analysis** via dedicated, structured prompt.
-
-5. **AI-Generated Daily Standups**
-
-- **Automates daily progress** reports by synthesizing Jira status changes, comments, and work logs from the last 24 hours into a concise team or individual summary.
-- **Data Synthesis and Structured Narrative Generation** using JQL query and dedicated standup schema.
-
-6. **Human-in-the-Loop Dashboard**
-
-- Built with **React + Shadcn/ui + React Query**.
-- Approve or reject tickets, automatically sync to Jira.
-
----
-
-## Project Structure
-
-```
+```text
 ai-scrum-assistant/
-│
-├── frontend/
-│   ├── public/
+├── backend/                  # Orchestration, AI logic, and APIs
 │   ├── src/
-│   │   ├── assets/
-│   │   ├── App.css
-│   │   ├── App.jsx
-│   │   ├── index.css
-│   │   └── main.jsx
-│   ├── .gitignore
-│   ├── eslint.config.js
-│   ├── index.html
-│   ├── package-lock.json
-│   ├── package.json
-│   ├── README.md
-│   └── vite.config.js
-│
-├── backend/
-│   ├── src/
-│   │   ├── controllers/
-│   │   ├── routes/
-│   │   ├── services/
-│   │   ├── utils/
-│   │   ├── index.js
-│   │   └── server.js
-│   ├── vector_store/
-│   ├── .gitignore
-│   ├── package-lock.json
+│   │   ├── controllers/      # Route logic handlers
+│   │   ├── routes/           # Express API endpoints
+│   │   ├── services/         # Modular services
+│   │   │   ├── ai/           # LangChain flows, chatbot, PRD parsers
+│   │   │   ├── automation/   # (Reserved for automations)
+│   │   │   └── jira/         # Jira API wrappers & agile metrics
+│   │   ├── index.js          # App initialization
+│   │   └── ...
+│   ├── .env                  # Backend configuration
 │   └── package.json
 │
-├── scripts/
-│   └── index_jira_tickets.js
+├── frontend/                 # React 19 Client
+│   ├── src/
+│   │   ├── components/       # Reusable UI parts & layouts
+│   │   ├── pages/            # Core views (Dashboard, Chat, PRDGenerator, Sprint)
+│   │   ├── store/            # Zustand global stores
+│   │   ├── hooks/            # Custom React Hooks
+│   │   └── main.tsx          # React Root
+│   └── package.json
 │
 └── README.md
 ```
 
 ---
 
-## API Endpoints
+## 🛣️ API Capabilities Snapshot
+The backend securely interfaces via JWT authentication once logged in with OAuth.
 
-| Method | Endpoint                      | Description                               |
-| ------ | ----------------------------- | ----------------------------------------- |
-| POST   | `/api/v1/tickets/analyze-prd` | Analyze PRD text and suggest Jira stories |
-| POST   | `/api/v1/tickets/approve`     | Approve suggestion and create Jira issue  |
-| GET    | `/api/v1/backlog/refine`      | Fetch duplicate & improvement suggestions |
-| GET    | `/api/v1/planning/sprint`     | Generate AI-driven sprint plan            |
-
----
-
-## Development Notes
-
-- Use **React Query** for server-state (avoid useState/Redux).
-- Store all credentials in `.env`.
-- Test modularly — AI logic and Jira logic are decoupled.
-- Enforce **structured outputs** with LangChain `withStructuredOutput()` + Zod.
+- **OAuth**: `/api/v1/auth/jira/login`, `/api/v1/auth/jira/callback`
+- **Jira Cloud/Agile**: `/api/v1/jira-cloud/cloud-id`, `/api/v1/jira-board/boards`, `/api/v1/jira-sprint/boards/:id/sprints`
+- **Scrum AI Operations**: 
+  - `POST /api/v1/scrum/suggestions` (RAG PRD parsing)
+  - `POST /api/v1/scrum/pushSuggestionsToJira` (Creation logic)
+  - `GET /api/v1/scrum/standup`
+  - `GET /api/v1/scrum/retrospective`
+- **Chat & Sessions**: `/api/v1/scrum/chat/session`, `/api/v1/scrum/chat/:sessionId/messages`
 
 ---
 
-## Phase 2 Roadmap
+## 🤝 Contribution & License
+This application is currently in development. Open to contributions!
 
-| Feature                            | Status     | Planned Enhancements          |
-| ---------------------------------- | ---------- | ----------------------------- |
-| Slack & GitHub integration         | ⏳ Planned | For multi-tool orchestration  |
-| Sprint retrospective summarization | ⏳ Planned | AI summarizer for sprint data |
-| OAuth 2.0 Auth                     | ⏳ Future  | Replace API token with OAuth  |
-| Multi-agent orchestration          | ⏳ Planned | Extend AI Orchestrator layer  |
-
----
-
-## References
-
-Based on:  
-**"A Pragmatic Technical Blueprint for the AI Scrum Assistant"**
-
----
-
-## Author & License
-
-_Open To Contribute_
-
-**Author:** MAC  
-**Contact:** anudeepmuppalla@gmail.com
+**Author**: MAC (anudeepmuppalla@gmail.com)
