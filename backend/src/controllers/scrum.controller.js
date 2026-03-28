@@ -1,8 +1,6 @@
 import { getSuggestionsFromPRD } from "../services/ai/prdToTickets.service.js";
 import { PushAISuggestionsBodySchema } from "../utils/schemas.js";
 import { pushAISuggestionsHierarchy } from "../services/jira/transformers/hierarchy.service.js";
-import { chatWithAI } from "../services/ai/chatbot.service.js";
-
 export const generateSuggestions = async (req, res) => {
   try {
     if (!req.file) {
