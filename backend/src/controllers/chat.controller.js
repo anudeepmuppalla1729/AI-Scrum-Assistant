@@ -131,8 +131,8 @@ export const sendMessage = async (req, res) => {
       role: msg.role,
       content: msg.content,
     }));
-    // 2. Generate AI Response
-    const answer = await chatWithAI(message, conversationHistory, sessionId);
+    // 2. Generate AI Response (pass userId for user-specific Jira tools)
+    const answer = await chatWithAI(message, conversationHistory, sessionId, userId);
 
     // 3. Save Assistant Message
     const assistantMsg = new ChatMessage({

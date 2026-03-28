@@ -262,6 +262,57 @@ router.get("/prd/session/:sessionId", auth, getPRDSession);
 router.patch("/prd/session/:sessionId", auth, updatePRDSession);
 router.delete("/prd/session/:sessionId", auth, deletePRDSession);
 
+import {
+  pushBacklogItem,
+  getPushHistory,
+  searchBacklog,
+} from "../controllers/backlog.controller.js";
+
+/**
+ * @openapi
+ * /api/v1/scrum/backlog/push:
+ *   post:
+ *     summary: Push a crafted backlog item to Jira
+ *     tags:
+ *       - Backlog
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       201:
+ *         description: Issue created in Jira
+ */
+router.post("/backlog/push", auth, pushBacklogItem);
+
+/**
+ * @openapi
+ * /api/v1/scrum/backlog/history:
+ *   get:
+ *     summary: Get push history
+ *     tags:
+ *       - Backlog
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of pushed backlog items
+ */
+router.get("/backlog/history", auth, getPushHistory);
+
+/**
+ * @openapi
+ * /api/v1/scrum/backlog/search:
+ *   get:
+ *     summary: Search existing Jira backlog for parent linking
+ *     tags:
+ *       - Backlog
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of matching Jira issues
+ */
+router.get("/backlog/search", auth, searchBacklog);
+
 /**
  * @openapi
  * /api/v1/scrum/webhooks/jira:
@@ -298,3 +349,4 @@ router.delete("/prd/session/:sessionId", auth, deletePRDSession);
  */
 router.post("/webhooks/jira", handleJiraWebhook);
 export default router;
+

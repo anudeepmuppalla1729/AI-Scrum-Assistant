@@ -1,31 +1,36 @@
-import agent from "./agent.service.js";
+import defaultAgent, { createConfiguredAgent } from "./agent.service.js";
 
 export const chatWithAI = async (
   userQuery,
   conversationHistory,
   sessionId = "1",
+  userId = null,
 ) => {
   try {
-    // We already moved the system prompt into the `messageModifier` of the LangGraph agent wrapper.
-    // This allows Gemini to correctly format the system instruction as the true top-level system message
-    // and prevents the "System message should be the first one" array formatting error.
-
     const messages = [
       ...conversationHistory,
       { role: "user", content: userQuery },
     ];
 
-    // Generate Response using LangGraph Tool Agent
+    // Use user-configured agent (with backlog search) when userId is available,
+    // otherwise fall back to default agent
+    const agent = userId ? createConfiguredAgent(userId) : defaultAgent;
+
     const response = await agent.invoke(
       { messages },
-      // By removing checkpointer, we only rely on the explicit passed MongoDB history,
-      // meaning thread_id doesn't dictate memory saving, it's virtually stateless,
-      // preventing RAM leakage and surviving Node runtime restarts!
       { configurable: { thread_id: sessionId } },
     );
 
     const aiMessage = response.messages.at(-1);
-    return aiMessage.content;
+    
+    // LangChain's Gemini bindings often return an array of content blocks instead of a single string.
+    // We need to normalize it to a string for MongoDB to save it properly.
+    let content = aiMessage.content;
+    if (Array.isArray(content)) {
+      content = content.map((block) => block.text || "").join("");
+    }
+    
+    return content;
   } catch (error) {
     console.error("Error in chatWithAI:", error);
     throw new Error("Failed to process chat query.");

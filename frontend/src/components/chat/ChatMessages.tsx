@@ -1,13 +1,22 @@
 import React, { useEffect, useRef } from "react";
-import type { ChatMessage } from "../../types/chat.types";
+import type { ChatMessage, PushedBacklogRecord } from "../../types/chat.types";
 import MessageBubble from "./MessageBubble";
 
 interface ChatMessagesProps {
     messages: ChatMessage[];
     loading?: boolean;
+    sessionId?: string | null;
+    pushedSessionItems?: PushedBacklogRecord[];
+    onBacklogPushed?: (jiraKey: string, jiraUrl: string) => void;
 }
 
-const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, loading }) => {
+const ChatMessages: React.FC<ChatMessagesProps> = ({
+    messages,
+    loading,
+    sessionId,
+    pushedSessionItems,
+    onBacklogPushed,
+}) => {
     const bottomRef = useRef<HTMLDivElement>(null);
 
     // Auto-scroll to bottom when messages change
@@ -18,7 +27,13 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, loading }) => {
     return (
         <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2">
             {messages.map((msg, index) => (
-                <MessageBubble key={index} message={msg} />
+                <MessageBubble
+                    key={index}
+                    message={msg}
+                    sessionId={sessionId}
+                    pushedSessionItems={pushedSessionItems}
+                    onBacklogPushed={onBacklogPushed}
+                />
             ))}
 
             {loading && (

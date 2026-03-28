@@ -1,13 +1,16 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/useAuthStore";
 import { useChatStore } from "../hooks/useChatSessions";
-import { useChat } from "../hooks/useChat"; // Re-import useChat
+import { useChat } from "../hooks/useChat";
+import { getPushHistory } from "../api/backlogApi";
+import type { PushedBacklogRecord } from "../types/chat.types";
 import ChatLayout from "../components/chat/ChatLayout";
 import ChatSidebar from "../components/chat/ChatSidebar";
-import { ChatHeader } from "../components/chat/ChatHeader"; // Named export
+import { ChatHeader } from "../components/chat/ChatHeader";
 import ChatMessages from "../components/chat/ChatMessages";
 import ChatInputBar from "../components/chat/ChatInputBar";
+import PushHistoryPanel from "../components/chat/PushHistoryPanel";
 
 const ChatPage: React.FC = () => {
   const { sessionId: urlSessionId } = useParams();
@@ -24,6 +27,10 @@ const ChatPage: React.FC = () => {
     setActiveSession,
   } = useChatStore();
 
+  // Refresh trigger for push history panel
+  const [historyRefreshTrigger, setHistoryRefreshTrigger] = useState(0);
+  const [pushedSessionItems, setPushedSessionItems] = useState<PushedBacklogRecord[]>([]);
+
   // Hook up chat logic
   const {
     messages,
@@ -35,6 +42,19 @@ const ChatPage: React.FC = () => {
     }
   });
 
+  const loadSessionHistory = useCallback(async () => {
+    if (activeSessionId) {
+      try {
+        const history = await getPushHistory(activeSessionId);
+        setPushedSessionItems(history);
+      } catch (err) {
+        console.error("Failed to fetch session history for chat parsing:", err);
+      }
+    } else {
+      setPushedSessionItems([]);
+    }
+  }, [activeSessionId, historyRefreshTrigger]);
+
   // 1. Initial Load
   useEffect(() => {
     if (token) {
@@ -42,12 +62,15 @@ const ChatPage: React.FC = () => {
     }
   }, [token, loadSessions]);
 
+  useEffect(() => {
+    loadSessionHistory();
+  }, [loadSessionHistory]);
+
   // 2. Sync URL -> Store & Auto-open
   useEffect(() => {
     if (urlSessionId && urlSessionId !== activeSessionId) {
       setActiveSession(urlSessionId);
     } else if (!urlSessionId) {
-      // Auto-redirect to the first loaded session if available
       if (sessions.length > 0) {
         const mostRecent = sessions[0];
         navigate(`/chat/${mostRecent._id}`, { replace: true });
@@ -84,40 +107,46 @@ const ChatPage: React.FC = () => {
   };
 
   const handleSendMessage = async (text: string) => {
-    // Pass workspace context if needed, for now just text
-    // accessing active session ID might be needed inside useChat if it persists per session
-    // For this impl, useChat seems to handle active session internally or via props?
-    // Looking at useChat.ts, it doesn't take sessionId arg in the verified file content,
-    // but it might rely on us passing context or it's a simple chat.
-    // Wait, useChat definition in step 35: `sendMessage` takes (text, workspace?).
-    // It does NOT seem to take sessionId. This suggests the backend infers it or it creates new if not present?
-    // But we have `activeSessionId`. The backend likely needs it.
-    // Let's assume for now we just send text. The user's prompt implies "old layout" worked.
-    // The "old layout" ChatContainer used `useChat` without arguments.
-
     await sendMessage(text);
   };
 
+  const handleBacklogPushed = () => {
+    // Trigger a refresh of the push history panel
+    setHistoryRefreshTrigger((prev) => prev + 1);
+  };
+
   return (
-    <ChatLayout
-      sidebar={
-        <ChatSidebar
-          sessions={sessions}
-          activeSessionId={activeSessionId}
-          onSelectSession={handleSelectSession}
-          onCreateSession={handleCreateSession}
-          onDeleteSession={handleDeleteSession}
-          onRenameSession={handleRenameSession}
-        />
-      }
-      chatArea={
-        <div className="flex flex-col h-full w-full">
-          <ChatHeader loading={isChatLoading} />
-          <ChatMessages messages={messages} loading={isChatLoading} />
-          <ChatInputBar onSend={handleSendMessage} disabled={isChatLoading} />
-        </div>
-      }
-    />
+    <>
+      <ChatLayout
+        sidebar={
+          <ChatSidebar
+            sessions={sessions}
+            activeSessionId={activeSessionId}
+            onSelectSession={handleSelectSession}
+            onCreateSession={handleCreateSession}
+            onDeleteSession={handleDeleteSession}
+            onRenameSession={handleRenameSession}
+          />
+        }
+        chatArea={
+          <div className="flex flex-col h-full w-full">
+            <ChatHeader loading={isChatLoading} />
+            <ChatMessages
+              messages={messages}
+              loading={isChatLoading}
+              sessionId={activeSessionId}
+              pushedSessionItems={pushedSessionItems}
+              onBacklogPushed={handleBacklogPushed}
+            />
+            <ChatInputBar onSend={handleSendMessage} disabled={isChatLoading} />
+          </div>
+        }
+      />
+      <PushHistoryPanel
+        sessionId={activeSessionId}
+        refreshTrigger={historyRefreshTrigger}
+      />
+    </>
   );
 };
 

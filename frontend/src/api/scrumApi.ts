@@ -7,14 +7,15 @@ import type {
   UpdatePRDSessionRequest,
 } from "../types/prd.types";
 
+import { useAuthStore } from "../store/useAuthStore";
+
 const API_BASE_URL = "/api/v1/scrum";
 
 // Helper to handle authentication errors
 const handleAuthError = (res: Response) => {
   if (res.status === 401) {
     console.warn("Received 401 - Logging out");
-    localStorage.removeItem("token");
-    window.location.href = "/";
+    useAuthStore.getState().logout();
     throw new Error("Session expired. Please login again.");
   }
 };

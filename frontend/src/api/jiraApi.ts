@@ -1,3 +1,5 @@
+import { useAuthStore } from "../store/useAuthStore";
+
 const BASE_URL = "http://localhost:2000/auth/jira";
 
 // Helper to handle responses and check for 401 (Token Expired)
@@ -5,8 +7,7 @@ const handleResponse = async (res: Response) => {
   if (res.status === 401) {
     // Token expired or invalid
     console.warn("Received 401 - Logging out");
-    localStorage.removeItem("token");
-    window.location.href = "/"; // Hard redirect to login
+    useAuthStore.getState().logout();
     throw new Error("Session expired. Please login again.");
   }
 
