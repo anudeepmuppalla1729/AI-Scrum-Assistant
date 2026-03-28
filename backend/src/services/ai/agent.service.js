@@ -1,4 +1,4 @@
-import { createReactAgent } from "@langchain/langgraph/prebuilt";
+import { createAgent } from "langchain";
 import { model } from "./model.service.js";
 import { ragSearchTool } from "./tools/rag.tool.js";
 import { createBacklogSearchTool } from "./tools/backlog.tool.js";
@@ -85,18 +85,18 @@ When a backlog item is finalized and confirmed by the user, output it inside a s
 export const createConfiguredAgent = (userId) => {
   const backlogSearchTool = createBacklogSearchTool(userId);
 
-  return createReactAgent({
-    llm: model,
+  return createAgent({
+    model,
     tools: [ragSearchTool, backlogSearchTool],
-    messageModifier: systemPrompt,
+    systemPrompt: systemPrompt,
   });
 };
 
 // Default agent for backward compatibility (without backlog search)
-const defaultAgent = createReactAgent({
-  llm: model,
+const defaultAgent = createAgent({
+  model,
   tools: [ragSearchTool],
-  messageModifier: systemPrompt,
+  systemPrompt: systemPrompt,
 });
 
 export default defaultAgent;

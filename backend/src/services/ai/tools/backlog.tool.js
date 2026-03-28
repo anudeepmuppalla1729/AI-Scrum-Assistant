@@ -1,4 +1,4 @@
-import { tool } from "@langchain/core/tools";
+import { tool } from "langchain";
 import { z } from "zod";
 import axios from "axios";
 import User from "../../../models/User.js";
@@ -13,15 +13,19 @@ export const createBacklogSearchTool = (userId) => {
     async ({ projectKey, searchText, issueType }) => {
       try {
         // Use Basic Auth from .env
-        if (!process.env.JIRA_HOST || !process.env.JIRA_EMAIL || !process.env.JIRA_API_TOKEN) {
+        if (
+          !process.env.JIRA_HOST ||
+          !process.env.JIRA_EMAIL ||
+          !process.env.JIRA_API_TOKEN
+        ) {
           return JSON.stringify({
             error: "Jira Basic Auth credentials not found in .env",
           });
         }
-        
+
         const basicAuth = Buffer.from(
-          `${process.env.JIRA_EMAIL}:${process.env.JIRA_API_TOKEN.replace(/"/g, '')}`
-        ).toString('base64');
+          `${process.env.JIRA_EMAIL}:${process.env.JIRA_API_TOKEN.replace(/"/g, "")}`,
+        ).toString("base64");
 
         // Build JQL query
         let jql = `project = "${projectKey}"`;
@@ -45,16 +49,13 @@ export const createBacklogSearchTool = (userId) => {
           maxResults: "20",
           fields: "summary,issuetype,status,parent,priority,description",
         });
-        
-        const response = await axios.get(
-          `${url}?${params.toString()}`,
-          {
-            headers: {
-              Authorization: `Basic ${basicAuth}`,
-              Accept: "application/json",
-            },
-          }
-        );
+
+        const response = await axios.get(`${url}?${params.toString()}`, {
+          headers: {
+            Authorization: `Basic ${basicAuth}`,
+            Accept: "application/json",
+          },
+        });
 
         const issues = (response.data?.issues || []).map((issue) => ({
           key: issue.key,
@@ -73,7 +74,7 @@ export const createBacklogSearchTool = (userId) => {
       } catch (error) {
         console.error(
           "Backlog search tool error:",
-          error.response?.data || error.message
+          error.response?.data || error.message,
         );
 
         if (error.response?.status === 401) {
@@ -106,15 +107,15 @@ ALWAYS call this tool when the user describes a new feature or requirement, so y
           .string()
           .optional()
           .describe(
-            "Text to search for in issue summaries and descriptions. Use keywords related to the user's requirement."
+            "Text to search for in issue summaries and descriptions. Use keywords related to the user's requirement.",
           ),
         issueType: z
           .enum(["Epic", "Story", "Task", "Bug"])
           .optional()
           .describe(
-            "Filter by issue type. Use 'Epic' when looking for parent Epics, 'Story' when looking for parent Stories."
+            "Filter by issue type. Use 'Epic' when looking for parent Epics, 'Story' when looking for parent Stories.",
           ),
       }),
-    }
+    },
   );
 };
