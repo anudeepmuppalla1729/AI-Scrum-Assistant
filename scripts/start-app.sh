@@ -19,14 +19,14 @@ trap cleanup SIGINT
 # This ensures the script works regardless of where it is called from
 cd "$(dirname "$0")/.."
 
-echo "Starting Backend..."
-cd backend
+echo "Starting Server..."
+cd server
 npm run dev &
 BACKEND_PID=$!
 
-echo "Starting Frontend..."
+echo "Starting Client..."
 # Navigate back to root then to frontend, or just relative from backend
-cd ../frontend
+cd ../client
 npm run dev &
 FRONTEND_PID=$!
 
