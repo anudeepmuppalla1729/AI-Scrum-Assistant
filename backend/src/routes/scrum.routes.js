@@ -56,7 +56,7 @@ const router = express.Router();
  *       500:
  *         description: Server error generating suggestions
  */
-router.post("/suggestions", upload.single("prdFile"), generateSuggestions);
+router.post("/suggestions", auth, upload.single("prdFile"), generateSuggestions);
 
 /**
  * @openapi
@@ -79,7 +79,7 @@ router.post("/suggestions", upload.single("prdFile"), generateSuggestions);
  *       500:
  *         description: Failed to push suggestions to Jira
  */
-router.post("/pushSuggestionsToJira", pushAISuggestionsToJira);
+router.post("/pushSuggestionsToJira", auth, pushAISuggestionsToJira);
 
 /**
  * @openapi
@@ -175,7 +175,7 @@ router.get("/chat/history", getChatHistory);
  *       400:
  *         description: Missing project key
  */
-router.get("/standup", getDailyStandupReport);
+router.get("/standup", auth, getDailyStandupReport);
 
 /**
  * @openapi
@@ -197,7 +197,7 @@ router.get("/standup", getDailyStandupReport);
  *       400:
  *         description: Missing sprint ID
  */
-router.get("/retrospective", getSprintRetrospectiveReport);
+router.get("/retrospective", auth, getSprintRetrospectiveReport);
 
 import {
   getPRDSessions,

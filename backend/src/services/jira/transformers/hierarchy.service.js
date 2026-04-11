@@ -5,14 +5,14 @@ import {
   toSubtaskCreatePayload,
 } from "./ticketTransformer.service.js";
 
-export async function pushAISuggestionsHierarchy({ projectKey, suggestions }) {
+export async function pushAISuggestionsHierarchy({ client, projectKey, suggestions }) {
   const created = { epics: [], stories: [], subtasks: [] };
   const errors = [];
 
   // Resolve issue type IDs once
   let subtaskTypeId = null;
   try {
-    subtaskTypeId = await resolveIssueTypeId(projectKey, (t) => {
+    subtaskTypeId = await resolveIssueTypeId(client, projectKey, (t) => {
       // Prefer types flagged as subtask, fallback to name contains
       return t?.subtask === true || /sub-?task/i.test(t?.name || "");
     });
@@ -29,7 +29,7 @@ export async function pushAISuggestionsHierarchy({ projectKey, suggestions }) {
     let epicIssue;
     try {
       const epicPayload = toEpicCreatePayload({ projectKey, epic });
-      epicIssue = await createIssueWithRetry(epicPayload);
+      epicIssue = await createIssueWithRetry(client, epicPayload);
       created.epics.push({
         id: epicIssue.id,
         key: epicIssue.key,
@@ -63,7 +63,7 @@ export async function pushAISuggestionsHierarchy({ projectKey, suggestions }) {
           story: issue,
           epicId,
         });
-        storyIssue = await createIssueWithRetry(storyPayload);
+        storyIssue = await createIssueWithRetry(client, storyPayload);
         created.stories.push({
           id: storyIssue.id,
           key: storyIssue.key,
@@ -94,7 +94,7 @@ export async function pushAISuggestionsHierarchy({ projectKey, suggestions }) {
             storyId,
             issueTypeId: subtaskTypeId,
           });
-          const subIssue = await createIssueWithRetry(subPayload);
+          const subIssue = await createIssueWithRetry(client, subPayload);
           created.subtasks.push({
             id: subIssue.id,
             key: subIssue.key,

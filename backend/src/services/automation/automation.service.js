@@ -2,11 +2,12 @@ import { model } from "../ai/model.service.js";
 import { queryKnowledgeBase } from "../ai/rag.service.js";
 import { search } from "../jira/issue_service.js";
 
-export const generateDailyStandup = async (projectKey) => {
+export const generateDailyStandup = async (client, projectKey) => {
   try {
     // 1. Fetch Active Sprint Issues
     // JQL: project = KEY AND sprint in openSprints()
     const issues = await search(
+      client,
       `project = "${projectKey}" AND sprint in openSprints()`
     );
     console.log(
@@ -55,7 +56,7 @@ Format:
   }
 };
 
-export const generateSprintRetrospective = async (sprintId) => {
+export const generateSprintRetrospective = async (client, sprintId) => {
   try {
     // 1. Fetch Sprint Issues from Jira
     // Assuming sprintId is the ID, JQL: sprint = <id>
@@ -63,7 +64,7 @@ export const generateSprintRetrospective = async (sprintId) => {
     // However, the error "Expecting either 'OR' or 'AND' but got 'Sprint'" suggests a malformed query string.
     // It's likely `sprintId` is being interpolated incorrectly or the JQL parser is strict.
     // Let's ensure sprintId is treated correctly.
-    const issues = await search(`sprint = "${sprintId}"`);
+    const issues = await search(client, `sprint = "${sprintId}"`);
 
     // 2. Calculate Metrics
     let plannedPoints = 0;

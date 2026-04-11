@@ -13,12 +13,16 @@ export const startJiraAuth = (req, res) => {
     scope: [
       "read:me",
       "read:user:jira",
-      "write:issue:jira",
       "read:jira-work",
+      "write:jira-work",
+      "write:issue:jira",
       "read:board-scope:jira-software",
       "read:sprint:jira-software",
       "read:project:jira",
       "read:issue:jira",
+      "manage:jira-project",
+      "read:jira-user",
+      "manage:jira-configuration"
     ].join(" "),
     state: "state-123",
     response_type: "code",
@@ -60,6 +64,16 @@ export const jiraCallback = async (req, res) => {
 
     const { account_id, email, name } = userInfo.data;
 
+    // 2.5 Fetch accessible resources to get cloudId
+    const resourcesResp = await axios.get("https://api.atlassian.com/oauth/token/accessible-resources", {
+      headers: { Authorization: `Bearer ${access_token}` }
+    });
+
+    const cloudId = resourcesResp.data[0]?.id;
+    if (!cloudId) {
+      console.warn(`User ${email} has no accessible Jira sites.`);
+    }
+
     // 3. Find or create user in MongoDB
     let user = await User.findOne({ atlassianAccountId: account_id });
 
@@ -68,6 +82,7 @@ export const jiraCallback = async (req, res) => {
         email: email,
         atlassianAccountId: account_id,
         displayName: name,
+        cloudId: cloudId,
         jiraTokens: {
           accessToken: access_token,
           refreshToken: refresh_token,
@@ -76,6 +91,7 @@ export const jiraCallback = async (req, res) => {
       });
     } else {
       // update tokens
+      user.cloudId = cloudId || user.cloudId;
       user.jiraTokens = {
         accessToken: access_token,
         refreshToken: refresh_token,

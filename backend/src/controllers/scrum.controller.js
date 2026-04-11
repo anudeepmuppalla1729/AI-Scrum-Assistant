@@ -1,6 +1,8 @@
 import { getSuggestionsFromPRD } from "../services/ai/prdToTickets.service.js";
 import { PushAISuggestionsBodySchema } from "../utils/schemas.js";
 import { pushAISuggestionsHierarchy } from "../services/jira/transformers/hierarchy.service.js";
+import { getJiraClient } from "../services/jira/jiraClient.js";
+
 export const generateSuggestions = async (req, res) => {
   try {
     if (!req.file) {
@@ -35,7 +37,13 @@ export const pushAISuggestionsToJira = async (req, res) => {
     const parsed = PushAISuggestionsBodySchema.parse(req.body);
     const { projectKey, suggestions } = parsed;
 
+    if (!req.user) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    const client = await getJiraClient(req.user);
+
     const result = await pushAISuggestionsHierarchy({
+      client,
       projectKey,
       suggestions,
     });
@@ -135,7 +143,11 @@ export const getDailyStandupReport = async (req, res) => {
     const { projectKey } = req.query;
     if (!projectKey)
       return res.status(400).json({ error: "Project key is required" });
-    const report = await generateDailyStandup(projectKey);
+    
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+    const client = await getJiraClient(req.user);
+
+    const report = await generateDailyStandup(client, projectKey);
     res.status(200).json({ success: true, report });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -147,7 +159,11 @@ export const getSprintRetrospectiveReport = async (req, res) => {
     const { sprintId } = req.query;
     if (!sprintId)
       return res.status(400).json({ error: "Sprint ID is required" });
-    const report = await generateSprintRetrospective(sprintId);
+    
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+    const client = await getJiraClient(req.user);
+
+    const report = await generateSprintRetrospective(client, sprintId);
     res.status(200).json({ success: true, report });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
