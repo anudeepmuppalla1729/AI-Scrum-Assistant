@@ -5,6 +5,7 @@ export const chatWithAI = async (
   conversationHistory,
   sessionId = "1",
   userId = null,
+  options = {},
 ) => {
   try {
     const messages = [
@@ -14,7 +15,9 @@ export const chatWithAI = async (
 
     // Use user-configured agent (with backlog search) when userId is available,
     // otherwise fall back to default agent
-    const agent = userId ? createConfiguredAgent(userId) : defaultAgent;
+    const agent = userId
+      ? createConfiguredAgent(userId, options)
+      : defaultAgent;
 
     const response = await agent.invoke(
       { messages },

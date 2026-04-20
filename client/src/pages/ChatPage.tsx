@@ -11,11 +11,13 @@ import { ChatHeader } from "../components/chat/ChatHeader";
 import ChatMessages from "../components/chat/ChatMessages";
 import ChatInputBar from "../components/chat/ChatInputBar";
 import PushHistoryPanel from "../components/chat/PushHistoryPanel";
+import { useWorkspaceStore } from "../store/useWorkspaceStore";
 
 const ChatPage: React.FC = () => {
   const { sessionId: urlSessionId } = useParams();
   const navigate = useNavigate();
   const { token } = useAuthStore();
+  const workspace = useWorkspaceStore((state) => state.workspace);
   const {
     sessions,
     activeSessionId,
@@ -107,7 +109,10 @@ const ChatPage: React.FC = () => {
   };
 
   const handleSendMessage = async (text: string) => {
-    await sendMessage(text);
+    await sendMessage(text, {
+      boardId: workspace?.boardId ?? null,
+      sprintId: workspace?.sprintId ?? null,
+    });
   };
 
   const handleBacklogPushed = () => {

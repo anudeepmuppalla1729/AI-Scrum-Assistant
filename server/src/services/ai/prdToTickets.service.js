@@ -109,7 +109,12 @@ const extractTextFromPdfBuffer = (pdfBuffer) => {
   });
 };
 
-export const getSuggestionsFromPRD = async (prdBuffer, userPrompt = "") => {
+export const getSuggestionsFromPRD = async (
+  prdBuffer,
+  userPrompt = "",
+  filename = "PRD Document",
+  boardId = null,
+) => {
   try {
     // Extract text
     const prdText = await extractTextFromPdfBuffer(prdBuffer);
@@ -126,7 +131,7 @@ export const getSuggestionsFromPRD = async (prdBuffer, userPrompt = "") => {
     console.log(`Extracted PRD text length: ${prdText.length} characters`);
 
     // Upsert to RAG (fire and forget)
-    upsertPRD(prdText, "PRD Document").catch((err) =>
+    upsertPRD(prdText, filename || "PRD Document", { boardId }).catch((err) =>
       console.error("Failed to upsert PRD to RAG:", err)
     );
 

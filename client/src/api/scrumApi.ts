@@ -22,9 +22,13 @@ const handleAuthError = (res: Response) => {
 
 export const uploadPRD = async (
   file: File,
+  boardId?: number | null,
 ): Promise<PRDSuggestionsResponse> => {
   const formData = new FormData();
   formData.append("prdFile", file);
+  if (boardId !== null && boardId !== undefined) {
+    formData.append("boardId", String(boardId));
+  }
 
   const response = await fetch(`${API_BASE_URL}/suggestions`, {
     method: "POST",

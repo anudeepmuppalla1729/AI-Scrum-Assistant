@@ -55,7 +55,10 @@ export const useChat = (
   }, [sessionId]);
 
   const sendMessage = useCallback(
-    async (text: string, workspace?: { boardId: string; sprintId: string }) => {
+    async (
+      text: string,
+      workspace?: { boardId: number | null; sprintId: number | null },
+    ) => {
       if (!text.trim() || !sessionId) return;
 
       // Optimistic append

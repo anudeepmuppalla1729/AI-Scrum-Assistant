@@ -1,6 +1,6 @@
 import { createAgent } from "langchain";
 import { model } from "./model.service.js";
-import { ragSearchTool } from "./tools/rag.tool.js";
+import { createRagSearchTool, ragSearchTool } from "./tools/rag.tool.js";
 import { createBacklogSearchTool } from "./tools/backlog.tool.js";
 
 const systemPrompt = `
@@ -82,12 +82,14 @@ When a backlog item is finalized and confirmed by the user, output it inside a s
  * Creates a configured agent with user-specific tools.
  * The backlog search tool needs userId to use the user's Jira OAuth tokens.
  */
-export const createConfiguredAgent = (userId) => {
+export const createConfiguredAgent = (userId, options = {}) => {
+  const boardId = options.boardId || null;
+  const ragTool = createRagSearchTool(boardId);
   const backlogSearchTool = createBacklogSearchTool(userId);
 
   return createAgent({
     model,
-    tools: [ragSearchTool, backlogSearchTool],
+    tools: [ragTool, backlogSearchTool],
     systemPrompt: systemPrompt,
   });
 };

@@ -4,8 +4,9 @@
   "description": "Backend Service that manages all required intergration of the app with jira and the AI layer.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon src/index.js"
+    "test": "node test/rag-context.test.js",
+    "dev": "nodemon src/index.js",
+    "migrate:rag:boards": "node scripts/migrate-shared-rag-to-board-collections.js"
   },
   "repository": {
     "type": "git",

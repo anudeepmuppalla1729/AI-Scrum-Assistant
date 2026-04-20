@@ -2,9 +2,13 @@ import { ChromaClient } from "chromadb";
 import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import dotenv from "dotenv";
+import {
+  LEGACY_COLLECTION_NAME,
+  buildBoardCollectionName,
+  getCandidateCollectionNames,
+  normalizeBoardId,
+} from "./rag.context.js";
 dotenv.config();
-
-const COLLECTION_NAME = "scrum_knowledge_base_v2";
 
 // Initialize ChromaDB Client
 const client = new ChromaClient({
@@ -17,19 +21,23 @@ const embeddings = new GoogleGenerativeAIEmbeddings({
   modelName: "gemini-embedding-001", // or text-embedding-004
 });
 
-let collection;
+const collectionCache = new Map();
+const embeddingFunction = {
+  generate: async (texts) => {
+    return await Promise.all(texts.map((t) => embeddings.embedQuery(t)));
+  },
+};
 
-const getCollection = async () => {
-  if (collection) return collection;
+const getCollectionByName = async (collectionName) => {
+  if (collectionCache.has(collectionName)) {
+    return collectionCache.get(collectionName);
+  }
   try {
-    collection = await client.getOrCreateCollection({
-      name: COLLECTION_NAME,
-      embeddingFunction: {
-        generate: async (texts) => {
-          return await Promise.all(texts.map((t) => embeddings.embedQuery(t)));
-        },
-      },
+    const collection = await client.getOrCreateCollection({
+      name: collectionName,
+      embeddingFunction,
     });
+    collectionCache.set(collectionName, collection);
     return collection;
   } catch (error) {
     console.error("Error connecting to ChromaDB:", error);
@@ -37,8 +45,27 @@ const getCollection = async () => {
   }
 };
 
-export const upsertTicket = async (ticket) => {
-  const col = await getCollection();
+const resolveCollectionNameForBoard = (boardId) => {
+  const normalizedBoardId = normalizeBoardId(boardId);
+  return normalizedBoardId
+    ? buildBoardCollectionName(normalizedBoardId)
+    : LEGACY_COLLECTION_NAME;
+};
+
+const mapResults = (results, collectionName) => {
+  const docs = results?.documents?.[0] || [];
+  const metadatas = results?.metadatas?.[0] || [];
+  return docs.map((doc, i) => ({
+    content: doc,
+    metadata: metadatas[i],
+    collectionName,
+  }));
+};
+
+export const upsertTicket = async (ticket, options = {}) => {
+  const boardId = normalizeBoardId(options.boardId);
+  const collectionName = resolveCollectionNameForBoard(boardId);
+  const col = await getCollectionByName(collectionName);
   const text = `Ticket: ${ticket.key} - ${ticket.summary}
 Status: ${ticket.status}
 Assignee: ${ticket.assignee || "Unassigned"}
@@ -57,15 +84,20 @@ Type: ${ticket.issuetype}`;
         key: ticket.key,
         status: ticket.status,
         updatedAt: ticket.updated || new Date().toISOString(),
+        ...(boardId ? { boardId } : {}),
       },
     ],
     documents: [text],
   });
-  console.log(`Upserted ticket ${ticket.key}`);
+  console.log(`Upserted ticket ${ticket.key} in ${collectionName}`);
 };
 
-export const upsertSprint = async (sprint) => {
-  const col = await getCollection();
+export const upsertSprint = async (sprint, options = {}) => {
+  const boardId = normalizeBoardId(
+    options.boardId || sprint.originBoardId || sprint.boardId,
+  );
+  const collectionName = resolveCollectionNameForBoard(boardId);
+  const col = await getCollectionByName(collectionName);
   const text = `Sprint: ${sprint.name} (ID: ${sprint.id})
 State: ${sprint.state}
 Goal: ${sprint.goal || "No goal"}
@@ -77,14 +109,23 @@ End Date: ${sprint.endDate}`;
   await col.upsert({
     ids: [`sprint-${sprint.id}`],
     embeddings: [embedding],
-    metadatas: [{ type: "sprint", sprintId: sprint.id, state: sprint.state }],
+    metadatas: [
+      {
+        type: "sprint",
+        sprintId: sprint.id,
+        state: sprint.state,
+        ...(boardId ? { boardId } : {}),
+      },
+    ],
     documents: [text],
   });
-  console.log(`Upserted sprint ${sprint.name}`);
+  console.log(`Upserted sprint ${sprint.name} in ${collectionName}`);
 };
 
-export const upsertPRD = async (prdText, filename) => {
-  const col = await getCollection();
+export const upsertPRD = async (prdText, filename, options = {}) => {
+  const boardId = normalizeBoardId(options.boardId);
+  const collectionName = resolveCollectionNameForBoard(boardId);
+  const col = await getCollectionByName(collectionName);
   const splitter = new RecursiveCharacterTextSplitter({
     chunkSize: 1000,
     chunkOverlap: 200,
@@ -103,6 +144,7 @@ export const upsertPRD = async (prdText, filename) => {
     type: "prd",
     filename,
     chunkIndex: i,
+    ...(boardId ? { boardId } : {}),
   }));
 
   await col.upsert({
@@ -111,20 +153,136 @@ export const upsertPRD = async (prdText, filename) => {
     metadatas,
     documents: texts,
   });
-  console.log(`Upserted PRD ${filename} in ${docs.length} chunks`);
+  console.log(
+    `Upserted PRD ${filename} in ${docs.length} chunks to ${collectionName}`,
+  );
 };
 
-export const queryKnowledgeBase = async (query, nResults = 5) => {
-  const col = await getCollection();
+export const queryKnowledgeBase = async (query, nResults = 5, options = {}) => {
+  const boardId = normalizeBoardId(options.boardId);
+  const includeLegacyFallback = options.includeLegacyFallback !== false;
+  const candidateCollectionNames = getCandidateCollectionNames(boardId, {
+    includeLegacyFallback,
+  });
   const queryEmbedding = await embeddings.embedQuery(query);
 
-  const results = await col.query({
-    queryEmbeddings: [queryEmbedding],
-    nResults,
-  });
+  for (const collectionName of candidateCollectionNames) {
+    const col = await getCollectionByName(collectionName);
+    const results = await col.query({
+      queryEmbeddings: [queryEmbedding],
+      nResults,
+    });
 
-  return results.documents[0].map((doc, i) => ({
-    content: doc,
-    metadata: results.metadatas[0][i],
-  }));
+    const mapped = mapResults(results, collectionName);
+    if (mapped.length > 0) return mapped;
+  }
+
+  return [];
+};
+
+export const migrateSharedCollectionToBoardCollections = async ({
+  defaultBoardId = null,
+  batchSize = 200,
+  dryRun = false,
+} = {}) => {
+  const resolvedDefaultBoardId = normalizeBoardId(defaultBoardId);
+  const sharedCollection = await getCollectionByName(LEGACY_COLLECTION_NAME);
+
+  let offset = 0;
+  let processed = 0;
+  let migrated = 0;
+  let skipped = 0;
+  const migratedByCollection = {};
+
+  while (true) {
+    const batch = await sharedCollection.get({
+      limit: batchSize,
+      offset,
+      include: ["documents", "metadatas", "embeddings"],
+    });
+
+    const ids = batch?.ids || [];
+    if (!ids.length) break;
+
+    const documents = batch?.documents || [];
+    const metadatas = batch?.metadatas || [];
+    const embeddingsBatch = batch?.embeddings || [];
+    const groupedRecords = new Map();
+
+    ids.forEach((id, index) => {
+      const metadata = metadatas[index] || {};
+      const metadataBoardId = normalizeBoardId(metadata.boardId);
+      const targetBoardId = metadataBoardId || resolvedDefaultBoardId;
+
+      if (!targetBoardId) {
+        skipped += 1;
+        return;
+      }
+
+      const targetCollectionName = buildBoardCollectionName(targetBoardId);
+      if (!groupedRecords.has(targetCollectionName)) {
+        groupedRecords.set(targetCollectionName, {
+          ids: [],
+          documents: [],
+          metadatas: [],
+          embeddings: [],
+          hasAnyEmbeddings: false,
+          hasMissingEmbeddings: false,
+        });
+      }
+
+      const group = groupedRecords.get(targetCollectionName);
+      group.ids.push(id);
+      group.documents.push(documents[index]);
+
+      const enrichedMetadata = {
+        ...metadata,
+        boardId: targetBoardId,
+        migratedFromCollection: LEGACY_COLLECTION_NAME,
+      };
+      group.metadatas.push(enrichedMetadata);
+
+      const embedding = embeddingsBatch[index];
+      if (Array.isArray(embedding) && embedding.length > 0) {
+        group.hasAnyEmbeddings = true;
+      } else {
+        group.hasMissingEmbeddings = true;
+      }
+      group.embeddings.push(embedding);
+    });
+
+    for (const [collectionName, group] of groupedRecords.entries()) {
+      if (!dryRun) {
+        const targetCollection = await getCollectionByName(collectionName);
+        const payload = {
+          ids: group.ids,
+          documents: group.documents,
+          metadatas: group.metadatas,
+        };
+
+        if (group.hasAnyEmbeddings && !group.hasMissingEmbeddings) {
+          payload.embeddings = group.embeddings;
+        }
+
+        await targetCollection.upsert(payload);
+      }
+
+      migrated += group.ids.length;
+      migratedByCollection[collectionName] =
+        (migratedByCollection[collectionName] || 0) + group.ids.length;
+    }
+
+    processed += ids.length;
+    offset += ids.length;
+  }
+
+  return {
+    sourceCollection: LEGACY_COLLECTION_NAME,
+    dryRun,
+    processed,
+    migrated,
+    skipped,
+    migratedByCollection,
+    defaultBoardId: resolvedDefaultBoardId,
+  };
 };
