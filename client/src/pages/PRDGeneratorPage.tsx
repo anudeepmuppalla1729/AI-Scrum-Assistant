@@ -31,7 +31,7 @@ const PRDGeneratorPage: React.FC = () => {
         setEpics,
         sessionId: currentSessionId,
         loadSession
-    } = usePRDGenerator(sessionId);
+    } = usePRDGenerator(sessionId, workspace?.boardId);
 
     // Sync URL with sessionId if it changes (and we aren't already there)
     useEffect(() => {

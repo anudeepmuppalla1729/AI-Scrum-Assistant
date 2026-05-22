@@ -19,7 +19,10 @@ interface UsePRDGeneratorReturn {
 
 export { type GeneratorOptions };
 
-export const usePRDGenerator = (initialSessionId?: string): UsePRDGeneratorReturn => {
+export const usePRDGenerator = (
+    initialSessionId?: string,
+    boardId?: number | null,
+): UsePRDGeneratorReturn => {
     const [state, setState] = useState<GeneratorState>('idle');
     const [epics, setEpics] = useState<EpicSuggestion[]>([]);
     const [uploadProgress, setUploadProgress] = useState(0);
@@ -85,7 +88,7 @@ export const usePRDGenerator = (initialSessionId?: string): UsePRDGeneratorRetur
                 }, 200);
 
                 setState('processing');
-                const response: PRDSuggestionsResponse = await uploadPRD(file);
+                const response: PRDSuggestionsResponse = await uploadPRD(file, boardId);
 
                 clearInterval(interval);
                 setUploadProgress(100);

@@ -1,6 +1,7 @@
 import ChatSession from "../models/ChatSession.js";
 import ChatMessage from "../models/ChatMessage.js";
 import { chatWithAI } from "../services/ai/chatbot.service.js";
+import { normalizeBoardId } from "../services/ai/rag.context.js";
 
 // --- Sessions ---
 
@@ -104,6 +105,7 @@ export const sendMessage = async (req, res) => {
     const { sessionId } = req.params;
     const { message } = req.body;
     const userId = req.user.userId;
+    const boardId = normalizeBoardId(req.body?.workspace?.boardId);
 
     if (!message) {
       return res.status(400).json({ error: "Message is required." });
@@ -132,7 +134,13 @@ export const sendMessage = async (req, res) => {
       content: msg.content,
     }));
     // 2. Generate AI Response (pass userId for user-specific Jira tools)
-    const answer = await chatWithAI(message, conversationHistory, sessionId, userId);
+    const answer = await chatWithAI(
+      message,
+      conversationHistory,
+      sessionId,
+      userId,
+      { boardId },
+    );
 
     // 3. Save Assistant Message
     const assistantMsg = new ChatMessage({

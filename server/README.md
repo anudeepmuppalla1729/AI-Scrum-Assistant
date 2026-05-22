@@ -65,3 +65,40 @@ npm run dev
 - **GET /api/v1/scrum/standup?projectKey=KEY**: Generate a Daily Standup report.
 - **GET /api/v1/scrum/retrospective?sprintId=ID**: Generate a Sprint Retrospective report.
 - **POST /api/v1/scrum/webhooks/jira**: Webhook endpoint for Jira events.
+
+## ChromaDB Collection Strategy (Per Jira Board)
+
+RAG data is now isolated per Jira board:
+
+- Legacy shared collection: `scrum_knowledge_base_v2`
+- Board collections: `scrum_knowledge_base_board_<boardId>`
+
+### Retrieval behavior
+
+- If a `boardId` is available in request context (chat workspace, PRD upload, webhook/automation context), RAG queries target the corresponding board collection.
+- For backward compatibility, board-scoped queries fallback to the legacy shared collection when the board collection has no matches.
+- If no board context is provided, the legacy shared collection is used.
+
+### Migration from shared to board collections
+
+Use the migration script to move existing legacy data:
+
+```bash
+npm run migrate:rag:boards -- --defaultBoardId=123
+```
+
+Optional flags:
+
+- `--dryRun=true` to preview without writing
+- `--batchSize=200` to tune migration batch size
+
+Notes:
+
+- Records that already contain `metadata.boardId` are routed to that board's collection.
+- Records without `boardId` are assigned to `--defaultBoardId` (or skipped if none is provided).
+- Collection handles are cached in-process to avoid repeated collection creation lookups for high board counts.
+
+### Compatibility / Breaking Changes
+
+- No hard breaking change for existing data: legacy collection fallback is still enabled.
+- Recommended migration path is to run the migration script and then rely on board-scoped retrieval for best isolation.

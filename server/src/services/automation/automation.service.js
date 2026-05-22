@@ -56,7 +56,7 @@ Format:
   }
 };
 
-export const generateSprintRetrospective = async (client, sprintId) => {
+export const generateSprintRetrospective = async (client, sprintId, boardId = null) => {
   try {
     // 1. Fetch Sprint Issues from Jira
     // Assuming sprintId is the ID, JQL: sprint = <id>
@@ -95,7 +95,8 @@ export const generateSprintRetrospective = async (client, sprintId) => {
     // 3. Fetch RAG Context (optional, for qualitative data)
     const contextDocs = await queryKnowledgeBase(
       `sprint ${sprintId} retrospective`,
-      5
+      5,
+      { boardId },
     );
     const contextText = contextDocs.map((doc) => doc.content).join("\n");
 

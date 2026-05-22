@@ -182,3 +182,23 @@ The backend securely interfaces via JWT authentication once logged in with OAuth
 This application is currently in development. Open to contributions!
 
 **Author**: MAC (anudeepmuppalla@gmail.com)
+
+---
+
+## ChromaDB Per-Board Collections
+
+RAG data is organized per Jira board to isolate context and improve retrieval relevance:
+
+- Legacy collection: `scrum_knowledge_base_v2`
+- Board-scoped collections: `scrum_knowledge_base_board_<boardId>`
+
+When board context is available, retrieval queries use the matching board collection. A legacy fallback remains enabled for backward compatibility when board-scoped data is not available yet.
+
+To migrate shared legacy data:
+
+```bash
+cd server
+npm run migrate:rag:boards -- --defaultBoardId=<board-id>
+```
+
+Use `--dryRun=true` first to validate migration behavior without writes.

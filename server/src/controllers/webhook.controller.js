@@ -2,12 +2,14 @@ import { upsertTicket, upsertSprint } from "../services/ai/rag.service.js";
 import { generateSprintRetrospective } from "../services/automation/automation.service.js";
 import User from "../models/User.js";
 import { getJiraClient } from "../services/jira/jiraClient.js";
+import { extractBoardIdFromJiraPayload } from "../services/ai/rag.context.js";
 
 export const handleJiraWebhook = async (req, res) => {
   try {
     console.log("Received webhook:", req.body);
     const event = req.body.webhookEvent;
     const { issue, sprint } = req.body;
+    const boardId = extractBoardIdFromJiraPayload(req.body);
 
     console.log(`Received Jira webhook: ${event}`);
 
@@ -25,7 +27,7 @@ export const handleJiraWebhook = async (req, res) => {
           issuetype: issue.fields.issuetype.name,
           updated: issue.fields.updated,
         };
-        await upsertTicket(ticketData);
+        await upsertTicket(ticketData, { boardId });
       }
     } else if (event.startsWith("sprint_")) {
       // Note: Jira sprint events might have different payload structures depending on configuration
@@ -39,7 +41,7 @@ export const handleJiraWebhook = async (req, res) => {
           startDate: sprint.startDate,
           endDate: sprint.endDate,
         };
-        await upsertSprint(sprintData);
+        await upsertSprint(sprintData, { boardId });
 
         if (event === "sprint_closed") {
           console.log(
@@ -58,7 +60,11 @@ export const handleJiraWebhook = async (req, res) => {
 
           if (user) {
             const client = await getJiraClient(user);
-            const retro = await generateSprintRetrospective(client, sprint.id);
+            const retro = await generateSprintRetrospective(
+              client,
+              sprint.id,
+              boardId,
+            );
             console.log("Retrospective generated:", retro);
             // In a real app, we would email this or post it to a Slack channel
           } else {

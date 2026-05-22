@@ -2,6 +2,7 @@ import { getSuggestionsFromPRD } from "../services/ai/prdToTickets.service.js";
 import { PushAISuggestionsBodySchema } from "../utils/schemas.js";
 import { pushAISuggestionsHierarchy } from "../services/jira/transformers/hierarchy.service.js";
 import { getJiraClient } from "../services/jira/jiraClient.js";
+import { normalizeBoardId } from "../services/ai/rag.context.js";
 
 export const generateSuggestions = async (req, res) => {
   try {
@@ -12,10 +13,12 @@ export const generateSuggestions = async (req, res) => {
     const prdBuffer = req.file.buffer;
     const userPrompt = req.body.userPrompt || "";
     const filename = req.file.originalname;
+    const boardId = normalizeBoardId(req.body.boardId);
     const aiSuggestions = await getSuggestionsFromPRD(
       prdBuffer,
       userPrompt,
-      filename
+      filename,
+      boardId,
     );
 
     return res.status(200).json({
@@ -157,13 +160,14 @@ export const getDailyStandupReport = async (req, res) => {
 export const getSprintRetrospectiveReport = async (req, res) => {
   try {
     const { sprintId } = req.query;
+    const boardId = normalizeBoardId(req.query?.boardId);
     if (!sprintId)
       return res.status(400).json({ error: "Sprint ID is required" });
     
     if (!req.user) return res.status(401).json({ error: "Unauthorized" });
     const client = await getJiraClient(req.user);
 
-    const report = await generateSprintRetrospective(client, sprintId);
+    const report = await generateSprintRetrospective(client, sprintId, boardId);
     res.status(200).json({ success: true, report });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
