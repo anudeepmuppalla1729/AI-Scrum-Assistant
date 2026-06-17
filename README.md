@@ -1,6 +1,6 @@
 # AI Scrum Assistant
 
-_A Multi-Agent, AI-Powered Scrum Companion for Jira_
+_A Multi-Agent, AI-Powered Scrum Companion for Jira
 
 > A full-stack, agentic AI system that automates backlog refinement, PRD parsing, sprint planning, and chat-based agile management — built with Node.js, LangChain.js, Google Gemini, Mongoose, Jira OAuth (3LO), and a modern React 19 frontend.
 
