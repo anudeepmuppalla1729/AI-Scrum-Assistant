@@ -1,4 +1,5 @@
-import { createAgent } from "langchain";
+import { StateGraph, MessagesAnnotation, START, END } from "@langchain/langgraph";
+import { ToolNode } from "@langchain/langgraph/prebuilt";
 import { model } from "./model.service.js";
 import { createRagSearchTool, ragSearchTool } from "./tools/rag.tool.js";
 import { createBacklogSearchTool } from "./tools/backlog.tool.js";
@@ -78,27 +79,51 @@ When a backlog item is finalized and confirmed by the user, output it inside a s
 - Be conversational and collaborative — this is a partnership, not a command interface
 `;
 
-/**
- * Creates a configured agent with user-specific tools.
- * The backlog search tool needs userId to use the user's Jira OAuth tokens.
- */
-export const createConfiguredAgent = (userId, options = {}) => {
-  const boardId = options.boardId || null;
-  const ragTool = createRagSearchTool(boardId);
-  const backlogSearchTool = createBacklogSearchTool(userId);
+const createAgentGraph = (tools) => {
+  const toolNode = new ToolNode(tools);
+  
+  const modelWithTools = model.bindTools(tools);
+  
+  const shouldContinue = (state) => {
+    const messages = state.messages;
+    const lastMessage = messages[messages.length - 1];
+    
+    if (lastMessage.tool_calls?.length) {
+      return "tools";
+    }
+    return END;
+  };
 
-  return createAgent({
-    model,
-    tools: [ragTool, backlogSearchTool],
-    systemPrompt: systemPrompt,
-  });
+  const callModel = async (state) => {
+    const messages = state.messages;
+    const systemMessage = { role: "system", content: systemPrompt };
+    const response = await modelWithTools.invoke([systemMessage, ...messages]);
+    return { messages: [response] };
+  };
+
+  const workflow = new StateGraph(MessagesAnnotation)
+    .addNode("agent", callModel)
+    .addNode("tools", toolNode)
+    .addEdge(START, "agent")
+    .addConditionalEdges("agent", shouldContinue, ["tools", END])
+    .addEdge("tools", "agent");
+    
+  return workflow;
 };
 
-// Default agent for backward compatibility (without backlog search)
-const defaultAgent = createAgent({
-  model,
-  tools: [ragSearchTool],
-  systemPrompt: systemPrompt,
-});
-
-export default defaultAgent;
+/**
+ * Compiles a LangGraph agent with user-specific tools and an optional checkpointer.
+ */
+export const compileAgent = (userId = null, options = {}, checkpointer = null) => {
+  const boardId = options.boardId || null;
+  const ragTool = createRagSearchTool(boardId);
+  
+  let tools = [ragTool];
+  if (userId) {
+    const backlogSearchTool = createBacklogSearchTool(userId);
+    tools.push(backlogSearchTool);
+  }
+  
+  const workflow = createAgentGraph(tools);
+  return workflow.compile({ checkpointer });
+};

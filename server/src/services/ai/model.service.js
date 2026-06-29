@@ -1,13 +1,25 @@
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { ChatOpenAI } from "@langchain/openai";
 import dotenv from "dotenv";
 dotenv.config();
 
-if (!process.env.GOOGLE_API_KEY) {
-  throw new Error("Missing GOOGLE_API_KEY in environment variables.");
+const MIMO_BASE_URL = process.env.MIMO_API_BASE || "https://api.xiaomimimo.com/v1";
+const MIMO_API_KEY = process.env.MIMO_API_KEY;
+
+if (!MIMO_API_KEY) {
+  throw new Error("Missing MIMO_API_KEY in environment variables.");
 }
-export const model = new ChatGoogleGenerativeAI({
-  apiKey: process.env.GOOGLE_API_KEY,
-  model: "gemini-2.5-flash",
+
+export const model = new ChatOpenAI({
+  apiKey: MIMO_API_KEY,
+  modelName: "mimo-v2.5",
+  configuration: {
+    baseURL: MIMO_BASE_URL,
+  },
   temperature: 0.4,
-  maxOutputTokens: 8192,
+  maxTokens: 8192,
+  modelKwargs: {
+    extra_body: {
+      enable_thinking: false // Bypass reasoning token mismatch for multi-turn tool loops
+    }
+  }
 });

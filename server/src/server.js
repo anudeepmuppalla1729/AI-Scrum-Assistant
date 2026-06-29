@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import rateLimit from "express-rate-limit";
 import scrumRoutes from "./routes/scrum.routes.js";
 import { setupSwagger } from "./swagger.js";
 import authRoutes from "./routes/auth.routes.js";
@@ -13,7 +14,19 @@ import jiraIssueCreateRoutes from "./routes/jiraIssueCreate.routes.js";
 
 const app = express();
 
-app.use(cors());
+const corsOptions = {
+  origin: process.env.FRONTEND_URL || "http://localhost:5173",
+  optionsSuccessStatus: 200
+};
+app.use(cors(corsOptions));
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 1000, // limit each IP to 1000 requests per windowMs (increased for dev)
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use(limiter);
 app.use(express.json({ limit: "10mb" })); // Allows larger payloads
 app.use("/auth", authRoutes);
 app.use("/auth/jira", jiraRoutes);

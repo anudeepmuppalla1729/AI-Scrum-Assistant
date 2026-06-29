@@ -1,4 +1,4 @@
-import { tool } from "langchain";
+import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import axios from "axios";
 import User from "../../../models/User.js";

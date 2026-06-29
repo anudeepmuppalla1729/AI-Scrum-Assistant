@@ -1,4 +1,6 @@
-import defaultAgent, { createConfiguredAgent } from "./agent.service.js";
+import { compileAgent } from "./agent.service.js";
+import { MongoDBSaver } from "@langchain/langgraph-checkpoint-mongodb";
+import mongoose from "mongoose";
 
 export const chatWithAI = async (
   userQuery,
@@ -8,26 +10,37 @@ export const chatWithAI = async (
   options = {},
 ) => {
   try {
-    const messages = [
-      ...conversationHistory,
-      { role: "user", content: userQuery },
-    ];
-
-    // Use user-configured agent (with backlog search) when userId is available,
-    // otherwise fall back to default agent
-    const agent = userId
-      ? createConfiguredAgent(userId, options)
-      : defaultAgent;
+    const client = mongoose.connection.getClient();
+    const dbName = process.env.DB_NAME || "jira_app";
+    const checkpointer = new MongoDBSaver({ client, dbName });
+    
+    const agent = compileAgent(userId, options, checkpointer);
+    
+    // Check if the graph has state for this thread
+    const config = { configurable: { thread_id: sessionId } };
+    const state = await agent.getState(config);
+    
+    let messages = [];
+    if (!state?.values?.messages?.length) {
+      // If no messages exist in the checkpointer, seed with history
+      messages = [
+        ...conversationHistory,
+        { role: "user", content: userQuery },
+      ];
+    } else {
+      // If checkpointer has history, just pass the new message
+      messages = [
+        { role: "user", content: userQuery },
+      ];
+    }
 
     const response = await agent.invoke(
       { messages },
-      { configurable: { thread_id: sessionId } },
+      config,
     );
 
     const aiMessage = response.messages.at(-1);
     
-    // LangChain's Gemini bindings often return an array of content blocks instead of a single string.
-    // We need to normalize it to a string for MongoDB to save it properly.
     let content = aiMessage.content;
     if (Array.isArray(content)) {
       content = content.map((block) => block.text || "").join("");
