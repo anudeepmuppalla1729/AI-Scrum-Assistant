@@ -31,7 +31,10 @@ export const updateGeneratedBacklog = async (req, res) => {
     const { rejectedEpicIds } = req.body;
 
     const backlog = await GeneratedBacklog.findOne({
-      _id: id,
+      $or: [
+        { _id: id.length === 24 ? id : null },
+        { sessionId: id.length === 24 ? id : null }
+      ],
       userId: req.user.userId || req.user._id
     });
 
@@ -66,7 +69,14 @@ export const updateStory = async (req, res) => {
     const updates = req.body;
 
     const backlog = await GeneratedBacklog.findOneAndUpdate(
-      { _id: id, "stories.story_id": storyId, userId: req.user.userId || req.user._id },
+      { 
+        $or: [
+          { _id: id.length === 24 ? id : null },
+          { sessionId: id.length === 24 ? id : null }
+        ],
+        "stories.story_id": storyId, 
+        userId: req.user.userId || req.user._id 
+      },
       { $set: { "stories.$": updates } },
       { new: true }
     );
@@ -88,7 +98,10 @@ export const approveAndPush = async (req, res) => {
     const { epicId } = req.body; // If provided, push only this epic. If null, push all pending.
 
     const backlog = await GeneratedBacklog.findOne({
-      _id: id,
+      $or: [
+        { _id: id.length === 24 ? id : null },
+        { sessionId: id.length === 24 ? id : null }
+      ],
       userId: req.user.userId || req.user._id
     });
 
