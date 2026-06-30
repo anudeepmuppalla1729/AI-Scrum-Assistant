@@ -278,6 +278,7 @@ const StoryReviewItem = ({ story, backlogId, isEditable }: { story: any, backlog
     const [isEditing, setIsEditing] = useState(false);
     const [editedStory, setEditedStory] = useState(story);
     const [saving, setSaving] = useState(false);
+    const [isSubtasksExpanded, setIsSubtasksExpanded] = useState(false);
 
     const handleSave = async () => {
         setSaving(true);
@@ -290,6 +291,8 @@ const StoryReviewItem = ({ story, backlogId, isEditable }: { story: any, backlog
             setSaving(false);
         }
     };
+
+    const hasSubtasks = story.subtasks && story.subtasks.length > 0;
 
     if (isEditing && isEditable) {
         return (
@@ -337,9 +340,25 @@ const StoryReviewItem = ({ story, backlogId, isEditable }: { story: any, backlog
         <div className="story-review-item" style={{ position: 'relative' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div className="flex items-start gap-3">
-                    <span className="badge badge-story" style={{ textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, fontSize: '0.6rem', marginTop: '2px' }}>
-                        Story
-                    </span>
+                    {hasSubtasks ? (
+                        <div 
+                            className="flex items-center gap-1 cursor-pointer story-toggle-btn"
+                            onClick={() => setIsSubtasksExpanded(!isSubtasksExpanded)}
+                            style={{ marginTop: '2px' }}
+                        >
+                            <div className={`chevron-rotate ${isSubtasksExpanded ? 'rotated' : ''}`}>
+                                <ChevronRight style={{ width: 14, height: 14 }} />
+                            </div>
+                            <span className="badge badge-story" style={{ textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, fontSize: '0.6rem' }}>
+                                Story
+                            </span>
+                        </div>
+                    ) : (
+                        <span className="badge badge-story" style={{ textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, fontSize: '0.6rem', marginTop: '2px' }}>
+                            Story
+                        </span>
+                    )}
+                    
                     <div>
                         <h4 style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--weight-semibold)', color: 'var(--color-text-primary)', lineHeight: 'var(--leading-snug)' }}>
                             {story.user_story}
@@ -348,6 +367,9 @@ const StoryReviewItem = ({ story, backlogId, isEditable }: { story: any, backlog
                             <span className="story-meta-tag">{story.story_points} pts</span>
                             <span>{story.priority}</span>
                             <span>Sprint {story.sprint}</span>
+                            {hasSubtasks && (
+                                <span>{story.subtasks.length} subtask{story.subtasks.length !== 1 ? 's' : ''}</span>
+                            )}
                             {story.validation_status === 'failed' && (
                                 <span className="badge badge-error" style={{ fontSize: '0.65rem' }}>
                                     <AlertCircle style={{ width: 12, height: 12 }} /> Flagged
@@ -384,6 +406,152 @@ const StoryReviewItem = ({ story, backlogId, isEditable }: { story: any, backlog
                             </ul>
                         </div>
                     )}
+                </div>
+            )}
+
+            {/* Subtasks */}
+            {hasSubtasks && (
+                <CollapsibleStories isExpanded={isSubtasksExpanded}>
+                    <div className="subtask-list">
+                        {story.subtasks.map((subtask: any, idx: number) => (
+                            <SubtaskReviewItem 
+                                key={idx} 
+                                subtask={subtask} 
+                                subtaskIndex={idx}
+                                parentStory={story}
+                                backlogId={backlogId}
+                                isEditable={isEditable}
+                            />
+                        ))}
+                    </div>
+                </CollapsibleStories>
+            )}
+        </div>
+    );
+};
+
+// Sub-component for individual subtask review
+const SubtaskReviewItem = ({ subtask, subtaskIndex, parentStory, backlogId, isEditable }: { subtask: any, subtaskIndex: number, parentStory: any, backlogId: string, isEditable: boolean }) => {
+    const [isEditing, setIsEditing] = useState(false);
+    const [editedSubtask, setEditedSubtask] = useState(subtask);
+    const [saving, setSaving] = useState(false);
+
+    const handleSave = async () => {
+        setSaving(true);
+        try {
+            // We need to update the parent story with the modified subtask
+            const updatedSubtasks = [...parentStory.subtasks];
+            updatedSubtasks[subtaskIndex] = editedSubtask;
+            
+            const updatedStory = {
+                ...parentStory,
+                subtasks: updatedSubtasks
+            };
+
+            await updateStory(backlogId, parentStory.story_id, updatedStory);
+            setIsEditing(false);
+        } catch (err) {
+            alert('Failed to save subtask changes');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    if (isEditing && isEditable) {
+        return (
+            <div className="subtask-item animate-fade-in" style={{ padding: 'var(--space-4)', background: 'var(--color-bg-secondary)' }}>
+                <div className="form-group">
+                    <label className="form-label">Task Title</label>
+                    <input 
+                        className="input"
+                        value={editedSubtask.title}
+                        onChange={e => setEditedSubtask({...editedSubtask, title: e.target.value})}
+                    />
+                </div>
+                <div className="form-group">
+                    <label className="form-label">Description</label>
+                    <textarea 
+                        className="textarea custom-scrollbar"
+                        style={{ minHeight: '60px' }}
+                        value={editedSubtask.description}
+                        onChange={e => setEditedSubtask({...editedSubtask, description: e.target.value})}
+                    />
+                </div>
+                <div className="form-group" style={{ display: 'flex', gap: 'var(--space-4)' }}>
+                    <div style={{ flex: 1 }}>
+                        <label className="form-label">Story Points</label>
+                        <input
+                            type="number"
+                            value={editedSubtask.story_points}
+                            onChange={e => setEditedSubtask({...editedSubtask, story_points: e.target.value === '' ? '' : Number(e.target.value)})}
+                            className="input"
+                            min="0"
+                            max="100"
+                        />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                        <label className="form-label">Priority</label>
+                        <select
+                            value={editedSubtask.priority}
+                            onChange={e => setEditedSubtask({...editedSubtask, priority: e.target.value})}
+                            className="input"
+                        >
+                            <option value="Highest">Highest</option>
+                            <option value="High">High</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Low">Low</option>
+                            <option value="Lowest">Lowest</option>
+                        </select>
+                    </div>
+                </div>
+                <div className="flex justify-between" style={{ paddingTop: 'var(--space-2)', justifyContent: 'flex-end', gap: 'var(--space-3)' }}>
+                    <button className="btn btn-ghost btn-sm" onClick={() => { setIsEditing(false); setEditedSubtask(subtask); }}>
+                        Cancel
+                    </button>
+                    <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
+                        {saving ? 'Saving...' : 'Save'}
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="subtask-item" style={{ position: 'relative' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div className="flex items-start gap-3">
+                    <span className="badge badge-task" style={{ textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, fontSize: '0.6rem', marginTop: '2px' }}>
+                        Task
+                    </span>
+                    <div>
+                        <h5 style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--weight-medium)', color: 'var(--color-text-primary)', lineHeight: 'var(--leading-snug)' }}>
+                            {subtask.title}
+                        </h5>
+                        <div className="story-meta" style={{ marginTop: 'var(--space-1)' }}>
+                            {subtask.story_points != null && (
+                                <span className="story-meta-tag">{subtask.story_points} pts</span>
+                            )}
+                            {subtask.priority && (
+                                <span>{subtask.priority}</span>
+                            )}
+                        </div>
+                    </div>
+                </div>
+                {isEditable && (
+                    <button 
+                        onClick={() => setIsEditing(true)}
+                        className="btn-icon btn-ghost subtask-edit-btn"
+                    >
+                        <Edit2 style={{ width: 14, height: 14 }} />
+                    </button>
+                )}
+            </div>
+            
+            {subtask.description && (
+                <div style={{ marginTop: 'var(--space-2)', marginLeft: '48px' }}>
+                    <p style={{ whiteSpace: 'pre-wrap', lineHeight: 'var(--leading-relaxed)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)' }}>
+                        {subtask.description}
+                    </p>
                 </div>
             )}
         </div>
