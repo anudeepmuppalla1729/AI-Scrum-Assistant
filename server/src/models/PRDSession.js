@@ -15,6 +15,19 @@ const prdSessionSchema = new mongoose.Schema(
             type: String,
             default: "",
         },
+        status: {
+            type: String,
+            enum: ['idle', 'processing', 'ready', 'failed'],
+            default: 'idle',
+        },
+        generatedBacklogId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "GeneratedBacklog",
+            default: null,
+        },
+        error: {
+            type: String,
+        },
         epics: {
             type: Array, // Storing the full JSON structure of epics/stories/tasks
             default: [],

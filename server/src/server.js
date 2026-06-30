@@ -11,11 +11,16 @@ import jiraBoardRoutes from "./routes/jiraBoard.routes.js";
 import jiraSprintRoutes from "./routes/jiraSprint.routes.js";
 import jiraIssueRoutes from "./routes/jiraIssue.routes.js";
 import jiraIssueCreateRoutes from "./routes/jiraIssueCreate.routes.js";
+import documentRoutes from "./routes/document.routes.js";
+import agentEventsRoutes from "./routes/agentEvents.routes.js";
 
 const app = express();
 
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || "http://localhost:5173",
+  origin: [
+    process.env.FRONTEND_URL || "http://localhost:5173",
+    "http://localhost:5174",
+  ],
   optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
@@ -44,11 +49,13 @@ app.get("/", (req, res) => {
 
 app.use("/auth/jira", jiraCloudRoutes);
 app.use("/api/v1/scrum", scrumRoutes);
+app.use("/api/v1/documents", documentRoutes);
 app.use("/auth/jira", jiraApiRoutes);
 app.use("/auth/jira", jiraBoardRoutes);
 app.use("/auth/jira", jiraSprintRoutes);
 app.use("/auth/jira", jiraIssueRoutes);
 app.use("/auth/jira", jiraIssueCreateRoutes);
+app.use("/api/v1/events", agentEventsRoutes);
 
 
 

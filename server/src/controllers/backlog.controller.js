@@ -86,7 +86,7 @@ export const pushBacklogItem = async (req, res) => {
     // Story points (custom field — fallback to env var)
     const storyPointsField =
       process.env.JIRA_STORY_POINTS_FIELD || "customfield_10016";
-    if (item.storyPoints && item.type !== "Epic") {
+    if (item.storyPoints && item.type !== "Epic" && typeof item.storyPoints === "number") {
       fields[storyPointsField] = item.storyPoints;
     }
 

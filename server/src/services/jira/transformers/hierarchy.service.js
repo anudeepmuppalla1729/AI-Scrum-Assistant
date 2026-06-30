@@ -35,11 +35,6 @@ export async function pushAISuggestionsHierarchy({ client, projectKey, suggestio
         key: epicIssue.key,
         summary: epic.title,
       });
-      created.epics.push({
-        id: epicIssue.id,
-        key: epicIssue.key,
-        summary: epic.title,
-      });
     } catch (err) {
       console.error(`Failed to create Epic "${epic.title}":`, err?.response?.data || err.message);
       errors.push({

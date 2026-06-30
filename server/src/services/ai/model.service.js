@@ -17,6 +17,25 @@ export const model = new ChatOpenAI({
   },
   temperature: 0.4,
   maxTokens: 8192,
+  maxConcurrency: 2,
+  maxRetries: 3,
+  modelKwargs: {
+    extra_body: {
+      enable_thinking: false // Bypass reasoning token mismatch for multi-turn tool loops
+    }
+  }
+});
+
+export const proModel = new ChatOpenAI({
+  apiKey: MIMO_API_KEY,
+  modelName: "mimo-v2.5-pro",
+  configuration: {
+    baseURL: MIMO_BASE_URL,
+  },
+  temperature: 0.4,
+  maxTokens: 8192,
+  maxConcurrency: 2,
+  maxRetries: 3,
   modelKwargs: {
     extra_body: {
       enable_thinking: false // Bypass reasoning token mismatch for multi-turn tool loops

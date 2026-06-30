@@ -1,5 +1,5 @@
-export const LEGACY_COLLECTION_NAME = "scrum_knowledge_base_v2";
-export const BOARD_COLLECTION_PREFIX = "scrum_knowledge_base_board";
+export const LEGACY_COLLECTION_NAME = "scrum_knowledge_base_v3";
+export const BOARD_COLLECTION_PREFIX = "scrum_kb_board_v3";
 
 export const normalizeBoardId = (boardId) => {
   if (boardId === null || boardId === undefined) return null;

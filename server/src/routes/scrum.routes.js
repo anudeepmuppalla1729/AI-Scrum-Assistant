@@ -283,6 +283,48 @@ import {
  */
 router.post("/backlog/push", auth, pushBacklogItem);
 
+import {
+  getGeneratedBacklog,
+  updateStory,
+  approveAndPush
+} from "../controllers/generatedBacklog.controller.js";
+
+/**
+ * @openapi
+ * /api/v1/scrum/backlog/generated/{id}:
+ *   get:
+ *     summary: Get a generated backlog by ID or sessionId
+ *     tags:
+ *       - Backlog
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get("/backlog/generated/:id", auth, getGeneratedBacklog);
+
+/**
+ * @openapi
+ * /api/v1/scrum/backlog/generated/{id}/stories/{storyId}:
+ *   patch:
+ *     summary: Update a story in the generated backlog
+ *     tags:
+ *       - Backlog
+ *     security:
+ *       - bearerAuth: []
+ */
+router.patch("/backlog/generated/:id/stories/:storyId", auth, updateStory);
+
+/**
+ * @openapi
+ * /api/v1/scrum/backlog/generated/{id}/approve:
+ *   post:
+ *     summary: Approve and push backlog or epic to Jira
+ *     tags:
+ *       - Backlog
+ *     security:
+ *       - bearerAuth: []
+ */
+router.post("/backlog/generated/:id/approve", auth, approveAndPush);
+
 /**
  * @openapi
  * /api/v1/scrum/backlog/history:

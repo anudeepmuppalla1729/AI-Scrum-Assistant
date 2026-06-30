@@ -89,7 +89,7 @@ const tryParseLLMJson = (text) => {
   return repairMalformattedJson(jsonString);
 };
 
-const extractTextFromPdfBuffer = (pdfBuffer) => {
+export const extractTextFromPdfBuffer = (pdfBuffer) => {
   return new Promise((resolve, reject) => {
     let fullText = "";
     try {
@@ -151,7 +151,10 @@ export const getSuggestionsFromPRD = async (
       If a story or task cannot be completed within a sprint, split it further.
       Always prefer delivering small, testable, vertical slices of value over large,
       cross-cutting chunks of work.`;
-    const structuredChain = model.withStructuredOutput(PRDParserSchema);
+    const structuredChain = model.withStructuredOutput(PRDParserSchema, {
+      method: "jsonMode",
+      name: "prd_parser",
+    });
     console.log("Sending PRD to AI model for processing...");
     const fullPrompt = `You are a Senior Scrum Master and Agile Coach.
                         Analyze the following Product Requirements Document (PRD) and generate

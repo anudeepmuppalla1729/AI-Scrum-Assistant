@@ -1,5 +1,6 @@
 import { ChromaClient } from "chromadb";
-import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
+import customEmbeddings from "../../utils/customEmbeddings.cjs";
+const HuggingFaceTransformersEmbeddings = customEmbeddings.CustomHuggingFaceEmbeddings;
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import dotenv from "dotenv";
 import {
@@ -15,10 +16,15 @@ const client = new ChromaClient({
   path: "http://localhost:8000",
 });
 
-// Initialize Embeddings
-const embeddings = new GoogleGenerativeAIEmbeddings({
-  apiKey: process.env.GOOGLE_API_KEY,
-  modelName: "gemini-embedding-001", // or text-embedding-004
+import { modelProgressCallback } from "../../utils/modelProgress.js";
+
+// Initialize Embeddings with local model
+const embeddings = new HuggingFaceTransformersEmbeddings({
+  model: "nomic-ai/nomic-embed-text-v1.5",
+  pretrainedOptions: {
+    dtype: "q8",
+    progress_callback: modelProgressCallback,
+  }
 });
 
 const collectionCache = new Map();
@@ -285,4 +291,58 @@ export const migrateSharedCollectionToBoardCollections = async ({
     migratedByCollection,
     defaultBoardId: resolvedDefaultBoardId,
   };
+};
+
+export const upsertBusinessDocument = async (id, content, filename, options = {}) => {
+  const boardId = normalizeBoardId(options.boardId);
+  const collectionName = resolveCollectionNameForBoard(boardId);
+  const col = await getCollectionByName(collectionName);
+  
+  const splitter = new RecursiveCharacterTextSplitter({
+    chunkSize: 1000,
+    chunkOverlap: 200,
+  });
+  
+  const docs = await splitter.createDocuments([content]);
+  const ids = docs.map((_, i) => `bizdoc-${id}-chunk-${i}`);
+  const texts = docs.map((d) => d.pageContent);
+
+  const embeddingsBatch = await Promise.all(
+    texts.map((t) => embeddings.embedQuery(t))
+  );
+
+  const metadatas = docs.map((_, i) => ({
+    type: "business_doc",
+    docId: id,
+    filename,
+    chunkIndex: i,
+    ...(boardId ? { boardId } : {}),
+  }));
+
+  await col.upsert({
+    ids,
+    embeddings: embeddingsBatch,
+    metadatas,
+    documents: texts,
+  });
+  console.log(`Upserted Business Document ${filename} (ID: ${id}) in ${docs.length} chunks to ${collectionName}`);
+};
+
+export const deleteBusinessDocument = async (id, options = {}) => {
+  const boardId = normalizeBoardId(options.boardId);
+  const collectionName = resolveCollectionNameForBoard(boardId);
+  const col = await getCollectionByName(collectionName);
+
+  // We have to delete all chunks by docId in metadata. 
+  // Chroma node API doesn't support where filter in delete directly, so we query first.
+  const results = await col.get({
+    where: { docId: id }
+  });
+
+  if (results && results.ids && results.ids.length > 0) {
+    await col.delete({
+      ids: results.ids
+    });
+    console.log(`Deleted Business Document (ID: ${id}) from ${collectionName}`);
+  }
 };

@@ -10,7 +10,14 @@ import { normalizeBoardId } from "../services/ai/rag.context.js";
 export const getSessions = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const sessions = await ChatSession.find({ userId }).sort({ updatedAt: -1 });
+    const { boardId } = req.query;
+    
+    let query = { userId };
+    if (boardId) {
+        query.boardId = normalizeBoardId(boardId);
+    }
+    
+    const sessions = await ChatSession.find(query).sort({ updatedAt: -1 });
     res.status(200).json(sessions);
   } catch (error) {
     console.error("Error fetching sessions:", error);
@@ -21,7 +28,14 @@ export const getSessions = async (req, res) => {
 export const createSession = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const session = new ChatSession({ userId, title: "New Chat" });
+    const { boardId } = req.body;
+    const normalizedBoardId = boardId ? normalizeBoardId(boardId) : undefined;
+    
+    const session = new ChatSession({ 
+        userId, 
+        title: "New Chat",
+        boardId: normalizedBoardId 
+    });
     await session.save();
     res.status(201).json(session);
   } catch (error) {
@@ -38,7 +52,7 @@ export const renameSession = async (req, res) => {
     const session = await ChatSession.findOneAndUpdate(
       { _id: sessionId, userId: req.user.userId },
       { title },
-      { new: true },
+      { returnDocument: 'after' },
     );
 
     if (!session) {

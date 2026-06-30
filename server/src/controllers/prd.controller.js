@@ -65,7 +65,7 @@ export const updatePRDSession = async (req, res) => {
         const session = await PRDSession.findOneAndUpdate(
             { _id: sessionId, userId: req.user.userId },
             updateData,
-            { new: true }
+            { returnDocument: 'after' }
         );
 
         if (!session) {

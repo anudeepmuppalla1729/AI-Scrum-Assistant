@@ -11,6 +11,9 @@ const chatSessionSchema = new mongoose.Schema(
       type: String,
       default: "New Chat",
     },
+    boardId: {
+      type: String,
+    },
     messages: [
       {
         role: {

@@ -11,6 +11,51 @@ const textToADF = (text = "") => ({
   ],
 });
 
+/**
+ * Build a rich ADF description that includes the description text
+ * plus acceptance criteria as a bullet list.
+ */
+const descriptionWithAC = (description = "", acceptanceCriteria = []) => {
+  const content = [];
+
+  // Main description paragraph
+  if (description) {
+    content.push({
+      type: "paragraph",
+      content: [{ type: "text", text: description }],
+    });
+  }
+
+  // Acceptance criteria section
+  if (Array.isArray(acceptanceCriteria) && acceptanceCriteria.length > 0) {
+    content.push({
+      type: "heading",
+      attrs: { level: 3 },
+      content: [{ type: "text", text: "Acceptance Criteria" }],
+    });
+    content.push({
+      type: "bulletList",
+      content: acceptanceCriteria.map((ac) => ({
+        type: "listItem",
+        content: [
+          {
+            type: "paragraph",
+            content: [{ type: "text", text: String(ac) }],
+          },
+        ],
+      })),
+    });
+  }
+
+  if (content.length === 0) return undefined;
+
+  return {
+    type: "doc",
+    version: 1,
+    content,
+  };
+};
+
 const withPriority = (fields, priorityName) => {
   if (!priorityName) return fields;
   return {
@@ -27,6 +72,17 @@ const withStoryPoints = (fields, storyPoints) => {
   return {
     ...fields,
     [customFieldId]: storyPoints,
+  };
+};
+
+const withAcceptanceCriteria = (fields, acceptanceCriteria = []) => {
+  const customFieldId = process.env.JIRA_AC_FIELD;
+  if (!customFieldId || !Array.isArray(acceptanceCriteria) || acceptanceCriteria.length === 0) {
+    return fields;
+  }
+  return {
+    ...fields,
+    [customFieldId]: acceptanceCriteria.join("\n"),
   };
 };
 
@@ -48,11 +104,15 @@ export const toStoryCreatePayload = ({ projectKey, story, epicId }) => {
     issuetype: { name: "Story" },
     parent: { id: epicId },
     summary: story.summary,
-    description: story.description ? textToADF(story.description) : undefined,
+    description: descriptionWithAC(
+      story.description,
+      story.acceptance_criteria || story.acceptanceCriteria
+    ),
   };
 
   fields = withPriority(fields, story.priority);
   fields = withStoryPoints(fields, story.story_points);
+  fields = withAcceptanceCriteria(fields, story.acceptance_criteria || story.acceptanceCriteria);
 
   return { fields };
 };
@@ -68,12 +128,14 @@ export const toSubtaskCreatePayload = ({
     issuetype: issueTypeId ? { id: issueTypeId } : { name: "Subtask" },
     parent: { id: storyId },
     summary: subtask.summary,
-    description: subtask.description
-      ? textToADF(subtask.description)
-      : undefined,
+    description: descriptionWithAC(
+      subtask.description,
+      subtask.acceptance_criteria || subtask.acceptanceCriteria
+    ),
   };
 
   fields = withPriority(fields, subtask.priority);
+  fields = withAcceptanceCriteria(fields, subtask.acceptance_criteria || subtask.acceptanceCriteria);
 
   return { fields };
 };
