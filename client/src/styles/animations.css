@@ -218,6 +218,67 @@
   animation: gradient-shift 8s ease infinite;
 }
 
+/* ── Bottom Sheet ── */
+@keyframes slide-up-sheet {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes slide-down-sheet {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}
+
+@keyframes overlay-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes overlay-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.bottom-sheet-enter {
+  animation: slide-up-sheet var(--duration-slow) var(--ease-spring) both;
+}
+
+.bottom-sheet-exit {
+  animation: slide-down-sheet var(--duration-normal) var(--ease-out) both;
+}
+
+.overlay-enter {
+  animation: overlay-fade-in var(--duration-normal) var(--ease-out) both;
+}
+
+.overlay-exit {
+  animation: overlay-fade-out var(--duration-fast) var(--ease-out) both;
+}
+
+/* ── Collapsible sections ── */
+.collapsible-content {
+  overflow: hidden;
+  transition: max-height var(--duration-slow) var(--ease-out),
+              opacity var(--duration-normal) var(--ease-out);
+}
+
+.collapsible-content.collapsed {
+  max-height: 0 !important;
+  opacity: 0;
+}
+
+.collapsible-content.expanded {
+  opacity: 1;
+}
+
+.chevron-rotate {
+  transition: transform var(--duration-normal) var(--ease-out);
+}
+
+.chevron-rotate.rotated {
+  transform: rotate(90deg);
+}
+
 /* ── Reduced motion ── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
