@@ -76,7 +76,7 @@ const PRDGeneratorPage: React.FC = () => {
     });
     
     // Business Documents Selection
-    const [availableDocs, setAvailableDocs] = useState<Record<string, unknown>[]>([]);
+    const [availableDocs, setAvailableDocs] = useState<{ _id: string, filename: string, [key: string]: any }[]>([]);
     const [selectedBusinessDocIds, setSelectedBusinessDocIds] = useState<string[]>([]);
 
     useEffect(() => {
@@ -170,6 +170,7 @@ const PRDGeneratorPage: React.FC = () => {
             await pushToJira(projectKey, [epicToPush]);
             alert("Epic successfully pushed to Jira!");
             handleCloseModal();
+            setEpics(prev => prev.filter((_, i) => i !== modalState.indices?.epic));
         } catch (err: unknown) {
             if (err instanceof Error) {
                 alert(`Failed to push epic: ${err.message}`);

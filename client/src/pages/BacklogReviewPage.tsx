@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getGeneratedBacklog, updateStory, approveAndPushEpic, type GeneratedBacklog } from '../api/generatedBacklogApi';
 import { useWorkspaceStore } from '../store/useWorkspaceStore';
-import { Check, X, Edit2, Play, AlertCircle, Loader2 } from 'lucide-react';
+import { Check, Edit2, Play, AlertCircle, Loader2, ChevronRight } from 'lucide-react';
 
 export const BacklogReviewPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -11,6 +11,9 @@ export const BacklogReviewPage: React.FC = () => {
     const [backlog, setBacklog] = useState<GeneratedBacklog | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    
+    // Collapsible epic state — default all collapsed
+    const [expandedEpics, setExpandedEpics] = useState<Set<string>>(new Set());
     
     // Polling setup for background pushes
     const [isPolling, setIsPolling] = useState(false);
@@ -37,7 +40,6 @@ export const BacklogReviewPage: React.FC = () => {
             setBacklog(data);
             setError(null);
             
-            // Check if we need to poll
             const hasPushing = data.epic_statuses.some((e: any) => e.status === 'pushing');
             setIsPolling(hasPushing);
             
@@ -52,7 +54,7 @@ export const BacklogReviewPage: React.FC = () => {
         if (!id) return;
         try {
             await approveAndPushEpic(id, epicId);
-            fetchBacklog(); // Fetch immediately to see 'pushing' status
+            fetchBacklog();
         } catch (err: any) {
             alert(`Failed to push epic: ${err.message}`);
         }
@@ -61,63 +63,91 @@ export const BacklogReviewPage: React.FC = () => {
     const handlePushAll = async () => {
         if (!id || !backlog) return;
         
-        // Find epics that are pending or failed (if tracking exists)
         if (backlog.epic_statuses && backlog.epic_statuses.length > 0) {
             const epicsToPush = backlog.epic_statuses.filter((e: any) => e.status === 'pending_review' || e.status === 'failed');
             if (epicsToPush.length === 0) return;
         }
         
         try {
-            await approveAndPushEpic(id, null); // null epicId pushes all
-            fetchBacklog(); // Fetch immediately to see 'pushing' status
+            await approveAndPushEpic(id, null);
+            fetchBacklog();
         } catch (err: any) {
             alert(`Failed to push all epics: ${err.message}`);
         }
     };
 
+    const toggleEpic = (epicId: string) => {
+        setExpandedEpics(prev => {
+            const next = new Set(prev);
+            if (next.has(epicId)) {
+                next.delete(epicId);
+            } else {
+                next.add(epicId);
+            }
+            return next;
+        });
+    };
+
     if (loading) {
-        return <div className="p-8 flex items-center justify-center h-full"><Loader2 className="w-8 h-8 animate-spin text-[var(--color-accent)]" /></div>;
+        return (
+            <div style={{ padding: 'var(--space-8)', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                <Loader2 style={{ width: 32, height: 32, color: 'var(--color-accent)' }} className="animate-spin" />
+            </div>
+        );
     }
 
     if (error || !backlog) {
-        return <div className="p-8 text-red-500">{error || 'Backlog not found'}</div>;
+        return (
+            <div style={{ padding: 'var(--space-8)', color: 'var(--color-error)' }}>
+                {error || 'Backlog not found'}
+            </div>
+        );
     }
 
     const { orchestrator_contract, stories, epic_statuses, validation_report } = backlog;
     const hasPendingOrFailedEpics = !epic_statuses || epic_statuses.length === 0 || epic_statuses.some((e: any) => e.status === 'pending_review' || e.status === 'failed');
     const isPushing = epic_statuses?.some((e: any) => e.status === 'pushing');
 
+    const getStatusBadgeClass = () => {
+        if (backlog.status === 'fully_pushed') return 'badge badge-status-pushed';
+        return 'badge badge-status-pending';
+    };
+
     return (
-        <div className="flex flex-col h-full bg-[var(--color-surface)] overflow-y-auto custom-scrollbar">
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--color-bg-secondary)', overflowY: 'auto' }} className="custom-scrollbar">
             {/* Header */}
-            <div className="sticky top-0 z-10 bg-[var(--color-bg-primary)] border-b border-[var(--color-border)] p-6 shadow-sm">
-                <div className="flex justify-between items-center max-w-5xl mx-auto">
+            <div className="glass-panel" style={{
+                position: 'sticky',
+                top: 0,
+                zIndex: 'var(--z-sticky)' as any,
+                borderRadius: 0,
+                borderTop: 'none',
+                borderLeft: 'none',
+                borderRight: 'none',
+                padding: 'var(--space-5) var(--space-6)',
+            }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', maxWidth: '960px', margin: '0 auto', width: '100%' }}>
                     <div>
-                        <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">Review Generated Backlog</h1>
-                        <p className="text-sm text-[var(--color-text-secondary)] mt-1">
+                        <h1 style={{ fontSize: 'var(--text-xl)', fontWeight: 'var(--weight-bold)', color: 'var(--color-text-primary)', letterSpacing: 'var(--tracking-tight)', fontFamily: 'var(--font-display)' }}>
+                            Review Generated Backlog
+                        </h1>
+                        <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-tertiary)', marginTop: 'var(--space-1)' }}>
                             {validation_report?.passed} stories passed, {validation_report?.failed_and_flagged} flagged.
                         </p>
                     </div>
-                    <div className="flex gap-4 items-center">
-                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${backlog.status === 'fully_pushed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                    <div className="flex gap-3 items-center">
+                        <span className={getStatusBadgeClass()}>
                             {backlog.status.replace('_', ' ').toUpperCase()}
                         </span>
                         
                         {(hasPendingOrFailedEpics || backlog.status === 'pending_review') && (
-                            <button
-                                onClick={handlePushAll}
-                                disabled={isPushing}
-                                className="btn btn-primary flex items-center gap-2"
-                            >
-                                {isPushing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+                            <button onClick={handlePushAll} disabled={isPushing} className="btn btn-primary">
+                                {isPushing ? <Loader2 style={{ width: 16, height: 16 }} className="animate-spin" /> : <Play style={{ width: 16, height: 16 }} />}
                                 {isPushing ? 'Pushing...' : 'Push All to Jira'}
                             </button>
                         )}
 
-                        <button
-                            onClick={() => navigate('/prd')}
-                            className="btn btn-secondary"
-                        >
+                        <button onClick={() => navigate('/prd')} className="btn btn-secondary">
                             Back to Generator
                         </button>
                     </div>
@@ -125,77 +155,119 @@ export const BacklogReviewPage: React.FC = () => {
             </div>
 
             {/* Content */}
-            <div className="p-6 max-w-5xl mx-auto w-full space-y-8">
-                {orchestrator_contract?.epics?.map((epic: any) => {
-                    const epicStories = stories.filter(s => s.epic_id === epic.id);
-                    const epicStatus = epic_statuses?.find((e: any) => e.epic_id === epic.id);
-                    const isPending = !epicStatus || epicStatus.status === 'pending_review';
-                    
-                    return (
-                        <div key={epic.id} className="bg-[var(--color-bg-primary)] rounded-xl border border-[var(--color-border)] overflow-hidden shadow-sm">
-                            {/* Epic Header */}
-                            <div className="p-5 border-b border-[var(--color-border)] bg-[var(--color-bg-secondary)] flex justify-between items-start">
-                                <div>
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <span className="px-2 py-1 text-xs font-bold bg-purple-100 text-purple-700 rounded uppercase tracking-wider">Epic</span>
-                                        <h2 className="text-lg font-bold text-[var(--color-text-primary)]">{epic.title}</h2>
+            <div style={{ padding: 'var(--space-6)', maxWidth: '960px', margin: '0 auto', width: '100%' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+                    {orchestrator_contract?.epics?.map((epic: any) => {
+                        const epicStories = stories.filter(s => s.epic_id === epic.id);
+                        const epicStatus = epic_statuses?.find((e: any) => e.epic_id === epic.id);
+                        const isPending = !epicStatus || epicStatus.status === 'pending_review';
+                        const isExpanded = expandedEpics.has(epic.id);
+                        
+                        return (
+                            <div key={epic.id} className="epic-card">
+                                {/* Epic Header — clickable to collapse/expand */}
+                                <div className="epic-card-header" onClick={() => toggleEpic(epic.id)}>
+                                    {/* Chevron */}
+                                    <div className={`chevron-rotate ${isExpanded ? 'rotated' : ''}`} style={{ marginTop: 'var(--space-1)', color: 'var(--color-text-tertiary)' }}>
+                                        <ChevronRight style={{ width: 20, height: 20 }} />
                                     </div>
-                                    <p className="text-sm text-[var(--color-text-secondary)] max-w-3xl">{epic.description}</p>
-                                </div>
-                                <div className="flex flex-col items-end gap-2">
-                                    {isPending && (
-                                        <button 
-                                            onClick={() => handlePushEpic(epic.id)}
-                                            className="btn btn-primary flex items-center gap-2"
-                                        >
-                                            <Play className="w-4 h-4" /> Push Epic
-                                        </button>
-                                    )}
-                                    {epicStatus?.status === 'pushing' && (
-                                        <div className="flex items-center gap-2 text-blue-600 font-medium">
-                                            <Loader2 className="w-4 h-4 animate-spin" /> Pushing...
-                                        </div>
-                                    )}
-                                    {epicStatus?.status === 'pushed' && (
-                                        <div className="flex items-center gap-2 text-green-600 font-medium bg-green-50 px-3 py-1 rounded-full">
-                                            <Check className="w-4 h-4" /> Pushed
-                                        </div>
-                                    )}
-                                    {epicStatus?.status === 'failed' && (
-                                        <div className="flex flex-col items-end gap-1">
-                                            <div className="flex items-center gap-2 text-red-600 font-medium bg-red-50 px-3 py-1 rounded-full">
-                                                <AlertCircle className="w-4 h-4" /> Push Failed
-                                            </div>
-                                            <button 
-                                                onClick={() => handlePushEpic(epic.id)}
-                                                className="text-xs text-blue-600 hover:underline"
-                                            >
-                                                Retry
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
 
-                            {/* Epic Stories */}
-                            <div className="divide-y divide-[var(--color-border-light)]">
-                                {epicStories.map((story) => (
-                                    <StoryReviewItem 
-                                        key={story.story_id} 
-                                        story={story} 
-                                        backlogId={id!} 
-                                        isEditable={epicStatus?.status === 'pending_review' || epicStatus?.status === 'failed'} 
-                                    />
-                                ))}
-                                {epicStories.length === 0 && (
-                                    <div className="p-6 text-center text-[var(--color-text-tertiary)] text-sm">
-                                        No stories drafted for this epic.
+                                    {/* Epic info */}
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                        <div className="flex items-center gap-2" style={{ marginBottom: 'var(--space-1)' }}>
+                                            <span className="badge badge-epic" style={{ textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, fontSize: '0.65rem' }}>
+                                                Epic
+                                            </span>
+                                            <span style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--weight-bold)', color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                {epic.title}
+                                            </span>
+                                        </div>
+                                        <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                            {epic.description}
+                                        </p>
+                                        {!isExpanded && epicStories.length > 0 && (
+                                            <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-tertiary)', marginTop: 'var(--space-1)', fontWeight: 'var(--weight-medium)' }}>
+                                                {epicStories.length} {epicStories.length === 1 ? 'story' : 'stories'}
+                                            </p>
+                                        )}
                                     </div>
-                                )}
+
+                                    {/* Status & Actions */}
+                                    <div className="flex items-center gap-2" style={{ flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+                                        {isPending && (
+                                            <button onClick={() => handlePushEpic(epic.id)} className="btn btn-primary btn-sm">
+                                                <Play style={{ width: 14, height: 14 }} /> Push Epic
+                                            </button>
+                                        )}
+                                        {epicStatus?.status === 'pushing' && (
+                                            <span className="badge badge-status-pushing">
+                                                <Loader2 style={{ width: 14, height: 14 }} className="animate-spin" /> Pushing…
+                                            </span>
+                                        )}
+                                        {epicStatus?.status === 'pushed' && (
+                                            <span className="badge badge-status-pushed">
+                                                <Check style={{ width: 14, height: 14 }} /> Pushed
+                                            </span>
+                                        )}
+                                        {epicStatus?.status === 'failed' && (
+                                            <div className="flex items-center gap-2">
+                                                <span className="badge badge-status-failed">
+                                                    <AlertCircle style={{ width: 14, height: 14 }} /> Failed
+                                                </span>
+                                                <button onClick={() => handlePushEpic(epic.id)} className="btn btn-ghost btn-sm" style={{ color: 'var(--color-info)' }}>
+                                                    Retry
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Collapsible Stories */}
+                                <CollapsibleStories isExpanded={isExpanded}>
+                                    <div style={{ borderTop: '1px solid var(--color-border-light)' }}>
+                                        {epicStories.map((story, idx) => (
+                                            <div key={story.story_id} style={{ borderBottom: idx < epicStories.length - 1 ? '1px solid var(--color-border-light)' : 'none' }}>
+                                                <StoryReviewItem 
+                                                    story={story} 
+                                                    backlogId={id!} 
+                                                    isEditable={epicStatus?.status === 'pending_review' || epicStatus?.status === 'failed'} 
+                                                />
+                                            </div>
+                                        ))}
+                                        {epicStories.length === 0 && (
+                                            <div style={{ padding: 'var(--space-6)', textAlign: 'center', color: 'var(--color-text-tertiary)', fontSize: 'var(--text-sm)' }}>
+                                                No stories drafted for this epic.
+                                            </div>
+                                        )}
+                                    </div>
+                                </CollapsibleStories>
                             </div>
-                        </div>
-                    );
-                })}
+                        );
+                    })}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Collapsible wrapper with smooth height animation
+const CollapsibleStories = ({ isExpanded, children }: { isExpanded: boolean; children: React.ReactNode }) => {
+    const contentRef = useRef<HTMLDivElement>(null);
+    const [maxHeight, setMaxHeight] = useState(0);
+
+    useEffect(() => {
+        if (contentRef.current) {
+            setMaxHeight(contentRef.current.scrollHeight);
+        }
+    }, [children, isExpanded]);
+
+    return (
+        <div
+            className={`collapsible-content ${isExpanded ? 'expanded' : 'collapsed'}`}
+            style={{ maxHeight: isExpanded ? `${maxHeight}px` : '0px' }}
+        >
+            <div ref={contentRef}>
+                {children}
             </div>
         </div>
     );
@@ -221,54 +293,64 @@ const StoryReviewItem = ({ story, backlogId, isEditable }: { story: any, backlog
 
     if (isEditing && isEditable) {
         return (
-            <div className="p-5 bg-white space-y-4 relative">
-                <div>
-                    <label className="block text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-1">User Story</label>
+            <div className="animate-fade-in" style={{ padding: 'var(--space-5)', background: 'var(--color-bg-secondary)' }}>
+                <div className="form-group">
+                    <label className="form-label">User Story</label>
                     <input 
-                        className="w-full border border-[var(--color-border)] rounded-md p-2 text-sm focus:ring-2 focus:ring-[var(--color-accent)]"
+                        className="input"
                         value={editedStory.user_story}
                         onChange={e => setEditedStory({...editedStory, user_story: e.target.value})}
                     />
                 </div>
-                <div>
-                    <label className="block text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-1">Description</label>
+                <div className="form-group">
+                    <label className="form-label">Description</label>
                     <textarea 
-                        className="w-full border border-[var(--color-border)] rounded-md p-2 text-sm h-24 focus:ring-2 focus:ring-[var(--color-accent)] custom-scrollbar"
+                        className="textarea custom-scrollbar"
+                        style={{ minHeight: '80px' }}
                         value={editedStory.description}
                         onChange={e => setEditedStory({...editedStory, description: e.target.value})}
                     />
                 </div>
-                <div>
-                    <label className="block text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-1">Acceptance Criteria</label>
+                <div className="form-group">
+                    <label className="form-label">Acceptance Criteria</label>
                     <textarea 
-                        className="w-full border border-[var(--color-border)] rounded-md p-2 text-sm h-32 focus:ring-2 focus:ring-[var(--color-accent)] custom-scrollbar"
+                        className="textarea custom-scrollbar"
+                        style={{ minHeight: '100px', fontFamily: 'var(--font-mono)', fontSize: 'var(--text-sm)' }}
                         value={(editedStory.acceptance_criteria || []).join('\n')}
                         onChange={e => setEditedStory({...editedStory, acceptance_criteria: e.target.value.split('\n')})}
                         placeholder="One criterion per line"
                     />
                 </div>
-                <div className="flex justify-end gap-3 pt-2">
-                    <button className="btn text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-secondary)]" onClick={() => { setIsEditing(false); setEditedStory(story); }}>Cancel</button>
-                    <button className="btn btn-primary" onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</button>
+                <div className="flex justify-between" style={{ paddingTop: 'var(--space-2)', justifyContent: 'flex-end', gap: 'var(--space-3)' }}>
+                    <button className="btn btn-ghost" onClick={() => { setIsEditing(false); setEditedStory(story); }}>
+                        Cancel
+                    </button>
+                    <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
+                        {saving ? 'Saving...' : 'Save Changes'}
+                    </button>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="p-5 hover:bg-[var(--color-bg-secondary)] transition-colors group relative">
-            <div className="flex justify-between items-start">
+        <div className="story-review-item" style={{ position: 'relative' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div className="flex items-start gap-3">
-                    <span className="px-2 py-0.5 mt-0.5 text-xs font-bold bg-blue-100 text-blue-700 rounded uppercase tracking-wider">Story</span>
+                    <span className="badge badge-story" style={{ textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, fontSize: '0.6rem', marginTop: '2px' }}>
+                        Story
+                    </span>
                     <div>
-                        <h4 className="text-sm font-semibold text-[var(--color-text-primary)] leading-snug">{story.user_story}</h4>
-                        <div className="flex items-center gap-3 mt-2 text-xs text-[var(--color-text-tertiary)] font-medium">
-                            <span className="bg-[var(--color-bg-tertiary)] px-2 py-0.5 rounded text-[var(--color-text-secondary)]">{story.story_points} pts</span>
+                        <h4 style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--weight-semibold)', color: 'var(--color-text-primary)', lineHeight: 'var(--leading-snug)' }}>
+                            {story.user_story}
+                        </h4>
+                        <div className="story-meta">
+                            <span className="story-meta-tag">{story.story_points} pts</span>
                             <span>{story.priority}</span>
                             <span>Sprint {story.sprint}</span>
                             {story.validation_status === 'failed' && (
-                                <span className="flex items-center gap-1 text-red-600 bg-red-50 px-2 py-0.5 rounded">
-                                    <AlertCircle className="w-3 h-3" /> Flagged
+                                <span className="badge badge-error" style={{ fontSize: '0.65rem' }}>
+                                    <AlertCircle style={{ width: 12, height: 12 }} /> Flagged
                                 </span>
                             )}
                         </div>
@@ -277,25 +359,25 @@ const StoryReviewItem = ({ story, backlogId, isEditable }: { story: any, backlog
                 {isEditable && (
                     <button 
                         onClick={() => setIsEditing(true)}
-                        className="p-1.5 text-[var(--color-text-tertiary)] hover:text-[var(--color-accent)] hover:bg-[var(--color-accent-lighter)] rounded-md opacity-0 group-hover:opacity-100 transition-all"
+                        className="btn-icon btn-ghost story-edit-btn"
                     >
-                        <Edit2 className="w-4 h-4" />
+                        <Edit2 style={{ width: 16, height: 16 }} />
                     </button>
                 )}
             </div>
             
             {(story.description || (story.acceptance_criteria && story.acceptance_criteria.length > 0)) && (
-                <div className="mt-4 ml-12 text-sm text-[var(--color-text-secondary)] bg-white border border-[var(--color-border-light)] p-3 rounded-lg shadow-sm">
+                <div className="story-detail-panel">
                     {story.description && (
-                        <div className="mb-3">
-                            <strong className="text-xs uppercase tracking-wider text-[var(--color-text-tertiary)] mb-1 block">Description</strong>
-                            <p className="whitespace-pre-wrap">{story.description}</p>
+                        <div style={{ marginBottom: 'var(--space-3)' }}>
+                            <strong className="form-label" style={{ marginBottom: 'var(--space-1)', fontSize: '0.6rem' }}>Description</strong>
+                            <p style={{ whiteSpace: 'pre-wrap', lineHeight: 'var(--leading-relaxed)', fontSize: 'var(--text-sm)' }}>{story.description}</p>
                         </div>
                     )}
                     {story.acceptance_criteria && story.acceptance_criteria.length > 0 && (
                         <div>
-                            <strong className="text-xs uppercase tracking-wider text-[var(--color-text-tertiary)] mb-1 block">Acceptance Criteria</strong>
-                            <ul className="list-disc pl-5 space-y-1">
+                            <strong className="form-label" style={{ marginBottom: 'var(--space-1)', fontSize: '0.6rem' }}>Acceptance Criteria</strong>
+                            <ul style={{ listStyleType: 'disc', paddingLeft: 'var(--space-5)', display: 'flex', flexDirection: 'column', gap: 'var(--space-1)', lineHeight: 'var(--leading-relaxed)', fontSize: 'var(--text-sm)' }}>
                                 {story.acceptance_criteria.map((ac: string, i: number) => (
                                     <li key={i}>{ac}</li>
                                 ))}
