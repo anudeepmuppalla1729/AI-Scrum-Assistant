@@ -63,19 +63,14 @@ export const WorkspaceSelect: React.FC = () => {
         <WorkspaceHeader step={1} boardName={undefined} />
 
         {error && (
-          <div className="bg-[var(--color-error-light)] border-l-4 border-[var(--color-error)] p-4 mb-4">
-            <div className="flex">
-              <div className="ml-3">
-                <p className="text-sm text-[var(--color-error)] font-medium">{error}</p>
-                {error.includes("backend") && (
-                  <button
-                    onClick={() => window.location.reload()}
-                    className="mt-2 text-sm text-[var(--color-error)] font-bold hover:underline"
-                  >
-                    Retry
-                  </button>
-                )}
-              </div>
+          <div className="alert-error">
+            <div style={{ marginLeft: 'var(--space-3)' }}>
+              <p>{error}</p>
+              {error.includes("backend") && (
+                <button onClick={() => window.location.reload()}>
+                  Retry
+                </button>
+              )}
             </div>
           </div>
         )}

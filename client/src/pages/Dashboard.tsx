@@ -64,10 +64,10 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="h-full overflow-y-auto p-6">
-      <h1>Dashboard</h1>
-      <p>Cloud ID: {cloudId}</p>
-      <p>Jira integration is live.</p>
+    <div className="custom-scrollbar" style={{ height: '100%', overflowY: 'auto', padding: 'var(--space-6)', background: 'var(--color-bg-primary)' }}>
+      <h1 className="heading-xl m-0 text-[var(--color-text-primary)]">Dashboard</h1>
+      <p className="text-sm text-[var(--color-text-secondary)] mt-1 font-medium">Cloud ID: {cloudId}</p>
+      <p className="text-sm text-[var(--color-text-tertiary)] mt-1">Jira integration is live.</p>
       <button onClick={handleCreateTestIssue} style={{ marginTop: "20px", padding: "10px" }}>
         Create Test Issue
       </button>

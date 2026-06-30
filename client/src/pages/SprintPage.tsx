@@ -2,8 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useWorkspaceStore } from "../store/useWorkspaceStore";
 import { getSprints, getSprintIssues } from "../api/jiraApi";
 import type { JiraSprint, JiraIssue } from "../types/jira";
+import PRDLayout from "../components/prd/PRDLayout";
 
-// Simple Left/Right Panel Layout
 const SprintPage: React.FC = () => {
   const workspace = useWorkspaceStore((state) => state.workspace);
   const [sprints, setSprints] = useState<JiraSprint[]>([]);
@@ -15,7 +15,7 @@ const SprintPage: React.FC = () => {
   const [loadingIssues, setLoadingIssues] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch Sprints on mount (based on boardId)
+  // Fetch Sprints on mount
   useEffect(() => {
     if (!workspace?.boardId) return;
 
@@ -64,140 +64,126 @@ const SprintPage: React.FC = () => {
     fetchIssues();
   }, [selectedSprintId]);
 
-  if (!workspace) return <div>No workspace selected.</div>;
+  if (!workspace) return <div style={{ padding: 'var(--space-6)' }}>No workspace selected.</div>;
 
   return (
-    <div className="flex h-full w-full bg-white">
-      {/* Left Panel: Sprints List */}
-      <div className="w-1/3 border-r border-gray-200 flex flex-col min-w-[250px]">
-        <div className="p-4 border-b border-gray-200 bg-gray-50">
-          <h2 className="text-lg font-semibold text-gray-800">Sprints</h2>
-          <p className="text-sm text-gray-500">Board: {workspace.boardName}</p>
-        </div>
+    <PRDLayout
+      sidebar={
+        <div className="custom-scrollbar" style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--color-bg-primary)', borderRight: '1px solid var(--color-border)' }}>
+          <div style={{ padding: 'var(--space-4)', borderBottom: '1px solid var(--color-border-light)' }}>
+            <h2 className="heading-md m-0">Sprints</h2>
+            <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', margin: 'var(--space-1) 0 0 0' }}>Board: {workspace.boardName}</p>
+          </div>
 
-        <div className="flex-1 overflow-y-auto">
-          {loadingSprints ? (
-            <div className="p-4 text-center text-gray-500">
-              Loading sprints...
-            </div>
-          ) : (
-            <ul className="divide-y divide-gray-100">
-              {sprints.map((sprint) => (
-                <li
-                  key={sprint.id}
-                  onClick={() => setSelectedSprintId(sprint.id)}
-                  className={`p-4 cursor-pointer hover:bg-gray-50 transition-colors ${
-                    selectedSprintId === sprint.id
-                      ? "bg-blue-50 border-l-4 border-blue-500"
-                      : ""
-                  }`}
-                >
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium text-gray-800">
-                      {sprint.name}
-                    </span>
-                    <span
-                      className={`text-xs px-2 py-1 rounded-full ${
-                        sprint.state === "active"
-                          ? "bg-green-100 text-green-800"
-                          : sprint.state === "future"
-                            ? "bg-blue-100 text-blue-800"
-                            : "bg-gray-100 text-gray-800"
-                      }`}
-                    >
-                      {sprint.state}
-                    </span>
+          <div style={{ flex: 1, overflowY: 'auto' }}>
+            {loadingSprints ? (
+              <div style={{ padding: 'var(--space-4)', textAlign: 'center', color: 'var(--color-text-tertiary)' }}>
+                Loading sprints...
+              </div>
+            ) : (
+              <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+                {sprints.map((sprint) => (
+                  <li
+                    key={sprint.id}
+                    onClick={() => setSelectedSprintId(sprint.id)}
+                    style={{ 
+                      padding: 'var(--space-4)', 
+                      cursor: 'pointer', 
+                      borderBottom: '1px solid var(--color-border-light)',
+                      background: selectedSprintId === sprint.id ? 'var(--color-accent-lighter)' : 'transparent',
+                      borderLeft: selectedSprintId === sprint.id ? '4px solid var(--color-accent)' : '4px solid transparent',
+                      transition: 'background 0.2s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontWeight: 'var(--weight-medium)', color: 'var(--color-text-primary)' }}>
+                        {sprint.name}
+                      </span>
+                      <span className={`badge ${sprint.state === 'active' ? 'badge-epic' : 'badge-neutral'}`}>
+                        {sprint.state}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-tertiary)', marginTop: 'var(--space-1)' }}>
+                      ID: {sprint.id}
+                    </div>
+                  </li>
+                ))}
+                {sprints.length === 0 && !loadingSprints && (
+                  <div style={{ padding: 'var(--space-4)', textAlign: 'center', color: 'var(--color-text-tertiary)' }}>
+                    No sprints found.
                   </div>
-                  <div className="text-xs text-gray-400 mt-1">
-                    ID: {sprint.id}
-                  </div>
-                </li>
-              ))}
-              {sprints.length === 0 && !loadingSprints && (
-                <div className="p-4 text-gray-500 text-center">
-                  No sprints found.
-                </div>
-              )}
-            </ul>
-          )}
+                )}
+              </ul>
+            )}
+          </div>
         </div>
-      </div>
+      }
+      mainArea={
+        <div className="custom-scrollbar" style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--color-bg-secondary)' }}>
+          <div style={{ padding: 'var(--space-4)', borderBottom: '1px solid var(--color-border-light)', background: 'var(--color-surface)', boxShadow: 'var(--shadow-sm)' }}>
+            <h2 className="heading-md m-0">
+              {selectedSprintId
+                ? `Issues in ${sprints.find((s) => s.id === selectedSprintId)?.name}`
+                : "Select a sprint to view issues"}
+            </h2>
+          </div>
 
-      {/* Right Panel: Issues List */}
-      <div className="flex-1 flex flex-col bg-gray-50">
-        <div className="p-4 border-b border-gray-200 bg-white shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-800">
-            {selectedSprintId
-              ? `Issues in ${sprints.find((s) => s.id === selectedSprintId)?.name}`
-              : "Select a sprint to view issues"}
-          </h2>
-        </div>
+          <div style={{ flex: 1, overflowY: 'auto', padding: 'var(--space-6)' }}>
+            {error && (
+              <div className="alert-error">
+                <p>{error}</p>
+              </div>
+            )}
 
-        <div className="flex-1 overflow-y-auto p-6">
-          {error && (
-            <div className="bg-red-50 text-red-700 p-4 rounded-md mb-4 border border-red-200">
-              {error}
-            </div>
-          )}
-
-          {loadingIssues ? (
-            <div className="flex justify-center items-center h-full text-gray-500">
-              Loading issues...
-            </div>
-          ) : !selectedSprintId ? (
-            <div className="flex justify-center items-center h-full text-gray-400">
-              Please select a sprint from the left sidebar
-            </div>
-          ) : issues.length === 0 ? (
-            <div className="flex justify-center items-center h-full text-gray-500">
-              No issues found in this sprint.
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {issues.map((issue: any) => (
-                <div
-                  key={issue.id || issue.key}
-                  className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="text-xs font-mono bg-gray-100 text-gray-600 px-2 py-1 rounded">
-                      {issue.key}
-                    </span>
-                    <div className="flex gap-2">
-                      {issue.fields?.priority?.name && (
-                        <span
-                          className={`text-xs px-2 py-1 rounded ${
-                            issue.fields.priority.name === "High" ||
-                            issue.fields.priority.name === "Highest"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-gray-100 text-gray-600"
-                          }`}
-                        >
-                          {issue.fields.priority.name}
+            {loadingIssues ? (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: 'var(--color-text-tertiary)' }}>
+                Loading issues...
+              </div>
+            ) : !selectedSprintId ? (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: 'var(--color-text-tertiary)' }}>
+                Please select a sprint from the left sidebar
+              </div>
+            ) : issues.length === 0 ? (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: 'var(--color-text-tertiary)' }}>
+                No issues found in this sprint.
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 'var(--space-4)' }}>
+                {issues.map((issue: any) => (
+                  <div key={issue.id || issue.key} className="epic-card" style={{ padding: 'var(--space-4)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-2)' }}>
+                      <span className="badge badge-neutral" style={{ fontFamily: 'monospace' }}>
+                        {issue.key}
+                      </span>
+                      <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                        {issue.fields?.priority?.name && (
+                          <span className={`badge ${issue.fields.priority.name === "High" || issue.fields.priority.name === "Highest" ? "badge-bug" : "badge-neutral"}`}>
+                            {issue.fields.priority.name}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <h3 style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--weight-medium)', color: 'var(--color-text-primary)', marginBottom: 'var(--space-4)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                      {issue.fields?.summary || "No Summary"}
+                    </h3>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
+                      <span className="badge badge-story">
+                        {issue.fields?.status?.name || "Unknown"}
+                      </span>
+                      {issue.fields?.issuetype?.name && (
+                        <span className="badge badge-neutral">
+                          {issue.fields.issuetype.name}
                         </span>
                       )}
                     </div>
                   </div>
-                  <h3 className="text-sm font-medium text-gray-900 mb-2 line-clamp-2">
-                    {issue.fields?.summary || "No Summary"}
-                  </h3>
-                  <div className="flex items-center justify-between mt-4">
-                    <span className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-50 text-blue-700">
-                      {issue.fields?.status?.name || "Unknown"}
-                    </span>
-                    {issue.fields?.issuetype?.name && (
-                      <span className="text-xs text-gray-500 border border-gray-200 px-2 py-1 rounded">
-                        {issue.fields.issuetype.name}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    </div>
+      }
+    />
   );
 };
 
