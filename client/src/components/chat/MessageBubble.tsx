@@ -91,9 +91,9 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   // User messages: simple bubble
   if (isUser) {
     return (
-      <div className="flex w-full mb-4 justify-end">
-        <div className="max-w-[70%] px-4 py-2 rounded-2xl bg-blue-600 text-white rounded-br-none">
-          <div className="prose prose-invert max-w-none text-base wrap-break-word prose-p:leading-relaxed">
+      <div className="message-row user">
+        <div className="message-bubble user">
+          <div className="prose prose-invert max-w-none text-base wrap-break-word">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {message.content}
             </ReactMarkdown>
@@ -108,31 +108,27 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
     segments && segments.some((s) => s.type === "backlog");
 
   return (
-    <div className="flex w-full mb-4 justify-start">
+    <div className="message-row assistant">
       <div
-        className={`${
-          hasBacklogItems ? "max-w-[85%]" : "max-w-[70%]"
-        } px-4 py-2 rounded-2xl bg-gray-200 text-gray-800 rounded-bl-none`}
+        className={`message-bubble assistant ${hasBacklogItems ? "wide" : ""}`}
       >
         {segments?.map((segment, i) => {
           if (segment.type === "backlog") {
             return (
-              <BacklogCard
-                key={i}
-                item={segment.item}
-                sessionId={sessionId}
-                pushedSessionItems={pushedSessionItems}
-                onPushed={onBacklogPushed}
-              />
+              <div key={i} className="my-4">
+                <BacklogCard
+                  item={segment.item}
+                  sessionId={sessionId}
+                  pushedSessionItems={pushedSessionItems}
+                  onPushed={onBacklogPushed}
+                />
+              </div>
             );
           }
           return (
             <div
               key={i}
-              className={`prose max-w-none text-base wrap-break-word
-                prose-headings:font-bold prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl
-                prose-p:leading-relaxed prose-pre:bg-gray-900 prose-pre:shadow-lg prose-pre:rounded-lg
-                prose-code:before:content-none prose-code:after:content-none`}
+              className="prose markdown-content max-w-none wrap-break-word"
             >
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
@@ -143,7 +139,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                       !match && !String(children).includes("\n");
                     return isInline ? (
                       <code
-                        className={`${className} bg-gray-200 text-red-500 px-1.5 py-0.5 rounded text-sm font-mono`}
+                        className={`${className} px-1.5 py-0.5 rounded text-[var(--color-accent)] bg-[var(--color-accent-subtle)] font-mono text-sm`}
                         {...props}
                       >
                         {children}

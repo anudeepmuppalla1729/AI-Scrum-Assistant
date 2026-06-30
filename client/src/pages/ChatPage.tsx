@@ -21,6 +21,7 @@ const ChatPage: React.FC = () => {
   const {
     sessions,
     activeSessionId,
+    sessionsLoaded,
     loadSessions,
     createSession,
     deleteSession,
@@ -37,7 +38,9 @@ const ChatPage: React.FC = () => {
   const {
     messages,
     loading: isChatLoading,
+    error: chatError,
     sendMessage,
+    resetError,
   } = useChat(activeSessionId, (newTitle) => {
     if (activeSessionId) {
       updateSessionTitleLocal(activeSessionId, newTitle);
@@ -60,9 +63,9 @@ const ChatPage: React.FC = () => {
   // 1. Initial Load
   useEffect(() => {
     if (token) {
-      loadSessions(token);
+      loadSessions(token, workspace?.boardId);
     }
-  }, [token, loadSessions]);
+  }, [token, workspace?.boardId, loadSessions]);
 
   useEffect(() => {
     loadSessionHistory();
@@ -70,6 +73,8 @@ const ChatPage: React.FC = () => {
 
   // 2. Sync URL -> Store & Auto-open
   useEffect(() => {
+    if (!sessionsLoaded) return; // Wait until sessions are loaded before redirecting
+
     if (urlSessionId && urlSessionId !== activeSessionId) {
       setActiveSession(urlSessionId);
     } else if (!urlSessionId) {
@@ -80,7 +85,7 @@ const ChatPage: React.FC = () => {
         setActiveSession(null);
       }
     }
-  }, [urlSessionId, setActiveSession, activeSessionId, sessions, navigate]);
+  }, [urlSessionId, setActiveSession, activeSessionId, sessions, sessionsLoaded, navigate]);
 
   // 3. Handlers
   const handleSelectSession = (id: string) => {
@@ -90,7 +95,7 @@ const ChatPage: React.FC = () => {
 
   const handleCreateSession = async () => {
     if (token) {
-      const newId = await createSession(token);
+      const newId = await createSession(token, workspace?.boardId);
       if (newId) {
         navigate(`/chat/${newId}`);
       }
@@ -134,8 +139,26 @@ const ChatPage: React.FC = () => {
           />
         }
         chatArea={
-          <div className="flex flex-col h-full w-full">
+          <>
             <ChatHeader loading={isChatLoading} />
+            
+            {/* Error Toast */}
+            {chatError && (
+              <div className="absolute top-[var(--space-4)] left-1/2 transform -translate-x-1/2 z-[var(--z-toast)]">
+                <div className="toast toast-error shadow-lg flex items-center">
+                  <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>{chatError}</span>
+                  <button onClick={resetError} className="toast-dismiss ml-2 text-current">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            )}
+
             <ChatMessages
               messages={messages}
               loading={isChatLoading}
@@ -144,7 +167,7 @@ const ChatPage: React.FC = () => {
               onBacklogPushed={handleBacklogPushed}
             />
             <ChatInputBar onSend={handleSendMessage} disabled={isChatLoading} />
-          </div>
+          </>
         }
       />
       <PushHistoryPanel

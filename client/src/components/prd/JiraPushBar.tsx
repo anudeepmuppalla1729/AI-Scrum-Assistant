@@ -19,17 +19,17 @@ export const JiraPushBar: React.FC<JiraPushBarProps> = ({
   if (totalSelected === 0) return null;
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-gray-200 shadow-lg animate-in slide-in-from-bottom-4 duration-300 z-10">
+    <div className="absolute bottom-0 left-0 right-0 p-4 glass-panel border-t-0 rounded-none z-[var(--z-sticky)]">
       <div className="flex items-center justify-between max-w-full mx-auto flex-wrap gap-4">
         <div className="flex flex-col min-w-0">
-          <span className="text-xs text-gray-500 font-semibold uppercase tracking-wider truncate">
+          <span className="text-xs text-[var(--color-text-tertiary)] font-semibold uppercase tracking-wider truncate">
             Selected Items
           </span>
-          <div className="flex items-center text-sm font-medium text-gray-900 space-x-1">
+          <div className="flex items-center text-sm font-medium text-[var(--color-text-primary)] gap-1">
             <span>{counts.epicCount} Epics</span>
-            <span className="text-gray-300">•</span>
+            <span className="text-[var(--color-text-tertiary)]">•</span>
             <span>{counts.storyCount} Stories</span>
-            <span className="text-gray-300">•</span>
+            <span className="text-[var(--color-text-tertiary)]">•</span>
             <span>{counts.taskCount} Tasks</span>
           </div>
         </div>
@@ -37,7 +37,7 @@ export const JiraPushBar: React.FC<JiraPushBarProps> = ({
         <button
           onClick={onPush}
           disabled={disabled || isLoading}
-          className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="btn btn-primary"
         >
           {isLoading ? (
             <span>Pushing...</span>

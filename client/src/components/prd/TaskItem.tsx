@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { CheckSquare, Square } from 'lucide-react';
 import type { TaskSuggestion } from '../../types/prd.types';
 
@@ -8,70 +8,39 @@ interface TaskItemProps {
     onToggle: () => void;
     onUpdate: (updates: Partial<TaskSuggestion>) => void;
     isLast: boolean;
+    onOpenModal?: () => void;
 }
 
-export const TaskItem: React.FC<TaskItemProps> = ({ task, isSelected, onToggle, onUpdate, isLast }) => {
-    const [isEditing, setIsEditing] = useState(false);
-    const [summary, setSummary] = useState(task.summary);
+export const TaskItem: React.FC<TaskItemProps> = ({ task, isSelected, onToggle, isLast, onOpenModal }) => {
 
-    // Sync local state if prop changes (e.g. from AI regeneration)
-    useEffect(() => {
-        setSummary(task.summary);
-    }, [task.summary]);
-
-    const handleBlur = () => {
-        setIsEditing(false);
-        if (summary !== task.summary) {
-            onUpdate({ summary });
-        }
-    };
-
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter') {
-            handleBlur();
-        }
-    };
 
     return (
-        <div className="flex items-start group relative pl-6 py-2 hover:bg-gray-50 rounded-md transition-colors">
+        <div className="flex items-start group relative pl-6 py-2 hover:bg-[var(--color-bg-secondary)] rounded-md transition-colors">
             {/* Tree connector line */}
-            <div className={`absolute left-[11px] top-0 w-px bg-gray-200 ${isLast ? 'h-5' : 'h-full'}`}></div>
-            <div className="absolute left-[11px] top-5 w-3 h-px bg-gray-200"></div>
+            <div className={`absolute left-[11px] top-0 w-[1px] bg-[var(--color-border)] ${isLast ? 'h-5' : 'h-full'}`}></div>
+            <div className="absolute left-[11px] top-5 w-3 h-[1px] bg-[var(--color-border)]"></div>
 
             <button
                 onClick={onToggle}
-                className="mt-0.5 mr-3 shrink-0 text-gray-400 hover:text-blue-500 transition-colors focus:outline-none"
+                className="mt-0.5 mr-3 shrink-0 text-[var(--color-text-tertiary)] hover:text-[var(--color-accent)] transition-colors focus:outline-none"
             >
                 {isSelected ? (
-                    <CheckSquare className="w-4 h-4 text-blue-500" />
+                    <CheckSquare className="w-4 h-4 text-[var(--color-accent)]" />
                 ) : (
                     <Square className="w-4 h-4" />
                 )}
             </button>
 
             <div className="flex-1 min-w-0">
-                <div className="flex items-center space-x-2">
-                    <span className="text-xs font-mono text-gray-400 uppercase tracking-wider shrink-0">Task</span>
-                    {isEditing ? (
-                        <input
-                            type="text"
-                            value={summary}
-                            onChange={(e) => setSummary(e.target.value)}
-                            onBlur={handleBlur}
-                            onKeyDown={handleKeyDown}
-                            autoFocus
-                            className="flex-1 text-sm text-gray-900 border-none p-0 focus:ring-0 bg-transparent placeholder-gray-400 min-w-0"
-                            placeholder="Enter task summary"
-                        />
-                    ) : (
-                        <span
-                            onClick={() => setIsEditing(true)}
-                            className="text-sm text-gray-700 truncate cursor-text hover:text-gray-900 flex-1 min-h-[20px] min-w-0"
-                            title={task.summary}
-                        >
-                            {task.summary || <span className="text-gray-400 italic">Empty task summary (click to edit)</span>}
-                        </span>
-                    )}
+                <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono text-[var(--color-text-tertiary)] uppercase tracking-wider shrink-0">Task</span>
+                    <span
+                        onClick={() => onOpenModal && onOpenModal()}
+                        className="text-sm text-[var(--color-text-secondary)] truncate cursor-pointer hover:text-[var(--color-accent)] flex-1 min-h-[20px] min-w-0"
+                        title="Click to view/edit details"
+                    >
+                        {task.summary || <span className="text-[var(--color-text-tertiary)] italic">Empty task summary</span>}
+                    </span>
                 </div>
             </div>
         </div>

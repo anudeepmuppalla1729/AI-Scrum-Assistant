@@ -1,8 +1,8 @@
 import React from "react";
-import { Layers } from "lucide-react";
 import type { StorySuggestion, EpicSuggestion } from "../../types/prd.types";
 import { OutputTree } from "./OutputTree";
 import type { usePRDSelection } from "../../hooks/usePRDSelection";
+import { ProcessingOverlay } from "./ProcessingOverlay";
 
 interface OutputPanelProps {
   epics: EpicSuggestion[];
@@ -14,6 +14,7 @@ interface OutputPanelProps {
     storyIndex: number,
     updates: Partial<StorySuggestion>,
   ) => void;
+  onOpenModal?: (type: 'Epic' | 'Story' | 'Task', epicIndex: number, storyIndex?: number, taskIndex?: number) => void;
 }
 
 export const OutputPanel: React.FC<OutputPanelProps> = ({
@@ -22,27 +23,24 @@ export const OutputPanel: React.FC<OutputPanelProps> = ({
   selectionInfo,
   onUpdateEpic,
   onUpdateStory,
+  onOpenModal,
 }) => {
   if (isLoading) {
-    return (
-      <div className="h-full flex flex-col items-center justify-center space-y-4 text-gray-400 animate-pulse">
-        <div className="w-16 h-16 bg-gray-200 rounded-lg"></div>
-        <div className="w-48 h-4 bg-gray-200 rounded"></div>
-        <div className="w-32 h-4 bg-gray-200 rounded"></div>
-      </div>
-    );
+    return <ProcessingOverlay />;
   }
 
   if (epics.length === 0) {
     return (
-      <div className="h-full flex flex-col items-center justify-center text-center p-8 text-gray-400">
-        <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-6">
-          <Layers className="w-8 h-8 text-gray-300" />
+      <div className="empty-state h-full bg-[var(--color-bg-primary)]">
+        <div className="empty-state-icon shadow-sm border border-[var(--color-border-light)]">
+          <svg className="w-8 h-8 text-[var(--color-text-tertiary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+          </svg>
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+        <h3 className="empty-state-title">
           AI Suggestions Will Appear Here
         </h3>
-        <p className="text-sm max-w-xs mx-auto">
+        <p className="empty-state-desc">
           Upload a PRD or describe your requirements to begin generating
           structured tickets.
         </p>
@@ -51,15 +49,14 @@ export const OutputPanel: React.FC<OutputPanelProps> = ({
   }
 
   return (
-    <div className="h-full overflow-y-auto pb-24">
-      {" "}
-      {/* pb-24 for sticky footer space */}
-      <div className="p-1">
+    <div className="h-full overflow-y-auto custom-scrollbar bg-[var(--color-surface)]">
+      <div className="p-4 md:p-6 lg:p-8">
         <OutputTree
           epics={epics}
           selectionInfo={selectionInfo}
           onUpdateEpic={onUpdateEpic}
           onUpdateStory={onUpdateStory}
+          onOpenModal={onOpenModal}
         />
       </div>
     </div>

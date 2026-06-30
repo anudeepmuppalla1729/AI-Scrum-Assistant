@@ -11,9 +11,9 @@ interface PromptInputProps {
 
 export const PromptInput: React.FC<PromptInputProps> = ({ prompt, setPrompt, options, setOptions, disabled }) => {
     return (
-        <div className="space-y-4">
-            <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">
+        <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+                <label className="label">
                     Custom Instructions
                 </label>
                 <textarea
@@ -21,46 +21,46 @@ export const PromptInput: React.FC<PromptInputProps> = ({ prompt, setPrompt, opt
                     onChange={(e) => setPrompt(e.target.value)}
                     disabled={disabled}
                     placeholder="Add optional instructions for the AI, such as:&#10;“Break features into epics and user stories.”&#10;“Prefer vertical slicing.”"
-                    className="w-full h-32 px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none text-sm placeholder:text-gray-400 transition-colors disabled:opacity-50 disabled:bg-gray-50"
+                    className="textarea"
                 />
             </div>
 
-            <div className="space-y-3">
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            <div className="flex flex-col gap-3">
+                <label className="text-xs font-semibold text-[var(--color-text-tertiary)] uppercase tracking-wider">
                     Generation Settings
                 </label>
-                <div className="space-y-2">
-                    <label className="flex items-center space-x-3 cursor-pointer group">
+                <div className="flex flex-col gap-2">
+                    <label className="flex items-center gap-3 cursor-pointer group">
                         <input
                             type="checkbox"
                             checked={options.includeAcceptanceCriteria}
                             onChange={(e) => setOptions({ ...options, includeAcceptanceCriteria: e.target.checked })}
                             disabled={disabled}
-                            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                            className="checkbox"
                         />
-                        <span className="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">Include acceptance criteria</span>
+                        <span className="text-sm text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)] transition-colors">Include acceptance criteria</span>
                     </label>
 
-                    <label className="flex items-center space-x-3 cursor-pointer group">
+                    <label className="flex items-center gap-3 cursor-pointer group">
                         <input
                             type="checkbox"
                             checked={options.estimateStoryPoints}
                             onChange={(e) => setOptions({ ...options, estimateStoryPoints: e.target.checked })}
                             disabled={disabled}
-                            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                            className="checkbox"
                         />
-                        <span className="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">Automatically estimate story points</span>
+                        <span className="text-sm text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)] transition-colors">Automatically estimate story points</span>
                     </label>
 
-                    <label className="flex items-center space-x-3 cursor-pointer group">
+                    <label className="flex items-center gap-3 cursor-pointer group">
                         <input
                             type="checkbox"
                             checked={options.includeSubTasks}
                             onChange={(e) => setOptions({ ...options, includeSubTasks: e.target.checked })}
                             disabled={disabled}
-                            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                            className="checkbox"
                         />
-                        <span className="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">Include sub-tasks in hierarchy</span>
+                        <span className="text-sm text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)] transition-colors">Include sub-tasks in hierarchy</span>
                     </label>
                 </div>
             </div>

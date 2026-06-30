@@ -12,13 +12,7 @@ export const GenerateButton: React.FC<GenerateButtonProps> = ({ onClick, isLoadi
         <button
             onClick={onClick}
             disabled={disabled || isLoading}
-            className={`
-                w-full h-12 flex items-center justify-center space-x-2 rounded-xl font-semibold text-white transition-all duration-200
-                ${disabled
-                    ? 'bg-gray-300 cursor-not-allowed'
-                    : 'bg-blue-600 hover:bg-blue-500 shadow-sm hover:shadow-md active:transform active:scale-[0.98]'
-                }
-            `}
+            className={`btn btn-lg btn-full ${disabled ? 'btn-secondary' : 'btn-primary'}`}
         >
             {isLoading ? (
                 <>

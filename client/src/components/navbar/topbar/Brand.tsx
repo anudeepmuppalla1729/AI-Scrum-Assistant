@@ -7,9 +7,14 @@ const Brand: React.FC = () => {
     return (
         <div
             onClick={() => navigate('/workspace')}
-            className="text-xl font-bold text-gray-900 cursor-pointer select-none hover:opacity-80 transition-opacity"
+            className="brand-container hover-lift"
         >
-            AI Scrum Assistant
+            <div className="brand-logo shadow-md">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+            </div>
+            <span className="brand-text">AI Scrum<span className="text-accent">.</span></span>
         </div>
     );
 };

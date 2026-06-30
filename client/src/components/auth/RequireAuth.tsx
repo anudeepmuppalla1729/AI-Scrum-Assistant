@@ -1,8 +1,9 @@
 import React from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { useAuthStore } from '../../store/useAuthStore';
 
 const RequireAuth: React.FC = () => {
-    const token = localStorage.getItem('token');
+    const token = useAuthStore(state => state.token);
     const location = useLocation();
 
     if (!token) {

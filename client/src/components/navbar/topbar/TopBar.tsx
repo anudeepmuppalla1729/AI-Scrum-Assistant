@@ -6,15 +6,16 @@ import UserMenu from './UserMenu';
 
 const TopBar: React.FC = () => {
     return (
-        <div className="h-16 px-5 border-b border-gray-200 bg-white flex items-center justify-between sticky top-0 z-40">
-            <div className="flex items-center">
+        <div className="topbar glass-panel animate-fade-in-down">
+            <div className="topbar-left">
                 <Brand />
+                <div className="topbar-divider hidden md:block"></div>
                 <WorkspaceSwitcher />
             </div>
 
             <SearchBar />
 
-            <div className="flex items-center">
+            <div className="topbar-right">
                 <UserMenu />
             </div>
         </div>

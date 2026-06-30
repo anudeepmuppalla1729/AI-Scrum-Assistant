@@ -25,26 +25,43 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
     }, [messages, loading]);
 
     return (
-        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2">
+        <div className="chat-messages-container custom-scrollbar">
+            {messages.length === 0 && !loading && (
+                <div className="chat-empty-state animate-fade-in">
+                    <div className="chat-empty-icon">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                        </svg>
+                    </div>
+                    <h3 className="chat-empty-title">How can I help you today?</h3>
+                    <p className="chat-empty-desc">Craft PRDs, generate user stories, or ask me about your sprint backlog.</p>
+                </div>
+            )}
             {messages.map((msg, index) => (
-                <MessageBubble
-                    key={index}
-                    message={msg}
-                    sessionId={sessionId}
-                    pushedSessionItems={pushedSessionItems}
-                    onBacklogPushed={onBacklogPushed}
-                />
+                <div key={index} className="animate-fade-in-up" style={{ animationDelay: `${index * 0.05}s` }}>
+                    <MessageBubble
+                        message={msg}
+                        sessionId={sessionId}
+                        pushedSessionItems={pushedSessionItems}
+                        onBacklogPushed={onBacklogPushed}
+                    />
+                </div>
             ))}
 
             {loading && (
-                <div className="flex w-full mb-4 justify-start">
-                    <div className="bg-gray-100 text-gray-500 px-4 py-2 rounded-2xl rounded-bl-none text-sm italic">
-                        AI is thinking...
+                <div className="thinking-indicator animate-fade-in">
+                    <div className="thinking-bubble">
+                        <div className="flex space-x-1">
+                            <div className="w-2 h-2 bg-[var(--color-accent)] rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></div>
+                            <div className="w-2 h-2 bg-[var(--color-accent)] rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></div>
+                            <div className="w-2 h-2 bg-[var(--color-accent)] rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></div>
+                        </div>
+                        <span>AI is thinking...</span>
                     </div>
                 </div>
             )}
 
-            <div ref={bottomRef} />
+            <div ref={bottomRef} className="h-4" />
         </div>
     );
 };

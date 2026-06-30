@@ -7,11 +7,11 @@ interface WorkspaceHeaderProps {
 
 export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = () => {
   return (
-    <div className="mb-8 text-center">
-      <h1 className="text-3xl font-bold text-gray-900 mb-2">
+    <div className="workspace-select-header">
+      <h1 className="workspace-select-title">
         Select Workspace
       </h1>
-      <p className="text-gray-600">Choose a Jira board to connect with.</p>
+      <p className="workspace-select-subtitle">Choose a Jira board to connect with.</p>
     </div>
   );
 };

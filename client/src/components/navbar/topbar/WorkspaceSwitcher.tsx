@@ -17,17 +17,22 @@ const WorkspaceSwitcher: React.FC = () => {
   };
 
   return (
-    <div className="relative ml-6">
+    <div className="relative">
       <button
         onClick={handleSwitcherClick}
-        className="flex items-center space-x-2 px-3 py-1.5 rounded-md hover:bg-gray-100 transition-colors focus:outline-none"
+        className="workspace-switcher"
       >
-        <div className="flex flex-col items-start">
+        <div className="workspace-switcher-content">
           {workspace ? (
-            <div className="flex items-center text-sm font-medium text-gray-900">
-              <span>Board: {workspace.boardName}</span>
+            <>
+              <div className="workspace-icon-box">
+                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  </svg>
+              </div>
+              <span>{workspace.boardName}</span>
               <svg
-                className={`ml-2 h-4 w-4 text-gray-400 transition-transform ${isDropdownOpen ? "transform rotate-180" : ""}`}
+                className={`ml-1 h-4 w-4 text-[var(--color-text-tertiary)] transition-transform ${isDropdownOpen ? "transform rotate-180" : ""}`}
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -39,9 +44,9 @@ const WorkspaceSwitcher: React.FC = () => {
                   d="M19 9l-7 7-7-7"
                 />
               </svg>
-            </div>
+            </>
           ) : (
-            <span className="text-sm font-medium text-gray-500">
+            <span className="text-[var(--color-text-tertiary)]">
               No workspace selected
             </span>
           )}

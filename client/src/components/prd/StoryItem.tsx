@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { CheckSquare, Square, ChevronRight, ChevronDown } from 'lucide-react';
 import type { StorySuggestion, TaskSuggestion } from '../../types/prd.types';
 import { TaskItem } from './TaskItem';
@@ -14,6 +14,7 @@ interface StoryItemProps {
     onUpdate: (updates: Partial<StorySuggestion>) => void;
     onUpdateTask: (taskIndex: number, updates: Partial<TaskSuggestion>) => void;
     isLast: boolean;
+    onOpenModal?: (type: 'Story' | 'Task', dummy1: number, dummy2?: number, taskIndex?: number) => void;
 }
 
 export const StoryItem: React.FC<StoryItemProps> = ({
@@ -24,24 +25,10 @@ export const StoryItem: React.FC<StoryItemProps> = ({
     onToggle,
     onToggleTask,
     onExpand,
-    onUpdate,
     onUpdateTask,
-    isLast
+    isLast,
+    onOpenModal
 }) => {
-    const [isEditing, setIsEditing] = useState(false);
-    const [summary, setSummary] = useState(story.summary);
-
-    useEffect(() => {
-        setSummary(story.summary);
-    }, [story.summary]);
-
-    const handleBlur = () => {
-        setIsEditing(false);
-        if (summary !== story.summary) {
-            onUpdate({ summary });
-        }
-    };
-
     const hasTasks = story.sub_issues && story.sub_issues.length > 0;
 
     // Determine partial selection state
@@ -51,35 +38,35 @@ export const StoryItem: React.FC<StoryItemProps> = ({
     return (
         <div className="relative">
             {/* Tree connector line */}
-            <div className={`absolute left-[11px] top-0 w-px bg-gray-200 ${isLast && !isExpanded ? 'h-6' : 'h-full'}`}></div>
+            <div className={`absolute left-[11px] top-0 w-[1px] bg-[var(--color-border)] ${isLast && !isExpanded ? 'h-6' : 'h-full'}`}></div>
 
             <div className={`
                 flex items-start group relative py-2 pl-2 pr-2 rounded-lg transition-all duration-200
-                ${isSelected ? 'bg-blue-50/50' : 'hover:bg-gray-50'}
+                ${isSelected ? 'bg-[var(--color-accent-lighter)]' : 'hover:bg-[var(--color-bg-secondary)]'}
             `}>
                 {/* Horizontal connector to parent */}
-                <div className="absolute left-[-13px] top-5 w-4 h-px bg-gray-200"></div>
+                <div className="absolute left-[-13px] top-5 w-4 h-[1px] bg-[var(--color-border)]"></div>
 
                 <div className="flex items-center mt-0.5 mr-2">
                     <button
                         onClick={onExpand}
                         disabled={!hasTasks}
-                        className={`p-0.5 rounded-md transition-colors ${hasTasks ? 'hover:bg-gray-200 text-gray-500' : 'text-transparent'}`}
+                        className={`p-0.5 rounded-md transition-colors ${hasTasks ? 'hover:bg-[var(--color-bg-tertiary)] text-[var(--color-text-secondary)]' : 'text-transparent'}`}
                     >
                         {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                     </button>
 
                     <button
                         onClick={onToggle}
-                        className="ml-1 text-gray-400 hover:text-blue-500 transition-colors focus:outline-none relative"
+                        className="ml-1 text-[var(--color-text-tertiary)] hover:text-[var(--color-accent)] transition-colors focus:outline-none relative"
                     >
                         {isSelected ? (
-                            <CheckSquare className="w-4 h-4 text-blue-500" />
+                            <CheckSquare className="w-4 h-4 text-[var(--color-accent)]" />
                         ) : isIndeterminate ? (
                             <div className="relative w-4 h-4">
                                 <Square className="w-4 h-4" />
                                 <div className="absolute inset-0 flex items-center justify-center">
-                                    <div className="w-2 h-2 bg-blue-500 rounded-sm"></div>
+                                    <div className="w-2 h-2 bg-[var(--color-accent)] rounded-sm"></div>
                                 </div>
                             </div>
                         ) : (
@@ -89,34 +76,22 @@ export const StoryItem: React.FC<StoryItemProps> = ({
                 </div>
 
                 <div className="flex-1 min-w-0">
-                    <div className="flex items-center space-x-2">
-                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-700 uppercase tracking-wide">
+                    <div className="flex items-center gap-2">
+                        <span className="badge badge-accent uppercase tracking-wide">
                             Story
                         </span>
                         <div className="flex-1 min-w-0">
-                            {isEditing ? (
-                                <input
-                                    type="text"
-                                    value={summary}
-                                    onChange={(e) => setSummary(e.target.value)}
-                                    onBlur={handleBlur}
-                                    autoFocus
-                                    className="w-full text-sm font-medium text-gray-900 border-none p-0 focus:ring-0 bg-transparent placeholder-gray-400"
-                                    placeholder="Enter story summary"
-                                />
-                            ) : (
-                                <h4
-                                    onClick={() => setIsEditing(true)}
-                                    className="text-sm font-medium text-gray-900 truncate cursor-text min-h-[20px]"
-                                    title={story.summary}
-                                >
-                                    {story.summary || <span className="text-gray-400 italic font-normal">Empty story summary (click to edit)</span>}
-                                </h4>
-                            )}
+                            <h4
+                                onClick={() => onOpenModal && onOpenModal('Story', 0)}
+                                className="text-sm font-medium text-[var(--color-text-primary)] truncate cursor-pointer hover:text-[var(--color-accent)] transition-colors min-h-[20px]"
+                                title="Click to view/edit details"
+                            >
+                                {story.summary || <span className="text-[var(--color-text-tertiary)] italic font-normal">Empty story summary</span>}
+                            </h4>
                         </div>
-                        <div className="flex items-center text-xs text-gray-400 space-x-3 shrink-0">
+                        <div className="flex items-center text-xs text-[var(--color-text-tertiary)] gap-3 shrink-0">
                             {story.story_points && (
-                                <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600 font-medium whitespace-nowrap">
+                                <span className="badge badge-neutral whitespace-nowrap">
                                     {story.story_points} pts
                                 </span>
                             )}
@@ -138,6 +113,7 @@ export const StoryItem: React.FC<StoryItemProps> = ({
                                 isSelected={isTaskSelected !== undefined ? isTaskSelected : isSelected}
                                 onToggle={() => onToggleTask(index)}
                                 onUpdate={(updates) => onUpdateTask(index, updates)}
+                                onOpenModal={() => onOpenModal && onOpenModal('Task', 0, 0, index)}
                                 isLast={index === (story.sub_issues?.length || 0) - 1}
                             />
                         );

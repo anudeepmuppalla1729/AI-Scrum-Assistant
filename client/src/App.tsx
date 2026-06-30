@@ -6,6 +6,8 @@ import Dashboard from "./pages/Dashboard";
 import ChatPage from "./pages/ChatPage";
 import SprintPage from "./pages/SprintPage";
 import PRDGeneratorPage from "./pages/PRDGeneratorPage";
+import BacklogReviewPage from "./pages/BacklogReviewPage";
+import DocumentsPage from "./pages/DocumentsPage";
 import WorkspaceSelect from "./pages/WorkspaceSelect";
 import Layout from "./components/Layout";
 import RequireAuth from "./components/auth/RequireAuth";
@@ -33,6 +35,8 @@ function App() {
               <Route path="/sprints" element={<SprintPage />} />
               <Route path="/prd" element={<PRDGeneratorPage />} />
               <Route path="/prd/:sessionId" element={<PRDGeneratorPage />} />
+              <Route path="/backlog/review/:id" element={<BacklogReviewPage />} />
+              <Route path="/documents" element={<DocumentsPage />} />
               <Route
                 path="/tools/standup"
                 element={

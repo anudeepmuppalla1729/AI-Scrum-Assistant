@@ -7,9 +7,10 @@ interface ChatStore {
   sessions: ChatSession[];
   activeSessionId: string | null;
   isLoadingSessions: boolean;
+  sessionsLoaded: boolean;
 
-  loadSessions: (token: string) => Promise<void>;
-  createSession: (token: string) => Promise<string | null>;
+  loadSessions: (token: string, boardId?: string | number | null) => Promise<void>;
+  createSession: (token: string, boardId?: string | number | null) => Promise<string | null>;
   deleteSession: (sessionId: string, token: string) => Promise<void>;
   renameSession: (
     sessionId: string,
@@ -24,16 +25,21 @@ export const useChatStore = create<ChatStore>((set) => ({
   sessions: [],
   activeSessionId: null,
   isLoadingSessions: false,
+  sessionsLoaded: false,
 
-  loadSessions: async (token: string) => {
+  loadSessions: async (token: string, boardId?: string | number | null) => {
     set({ isLoadingSessions: true });
     try {
-      const res = await fetch(`${API_BASE_URL}/scrum/chat/sessions`, {
+      const url = boardId 
+        ? `${API_BASE_URL}/scrum/chat/sessions?boardId=${boardId}`
+        : `${API_BASE_URL}/scrum/chat/sessions`;
+        
+      const res = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
         const data = await res.json();
-        set({ sessions: data });
+        set({ sessions: data, sessionsLoaded: true });
       }
     } catch (err) {
       console.error("Failed to load sessions", err);
@@ -42,11 +48,15 @@ export const useChatStore = create<ChatStore>((set) => ({
     }
   },
 
-  createSession: async (token: string) => {
+  createSession: async (token: string, boardId?: string | number | null) => {
     try {
       const res = await fetch(`${API_BASE_URL}/scrum/chat/session`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { 
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}` 
+        },
+        body: JSON.stringify({ boardId }),
       });
       if (res.ok) {
         const newSession = await res.json();

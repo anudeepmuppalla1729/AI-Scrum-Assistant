@@ -8,13 +8,15 @@ interface OutputTreeProps {
     selectionInfo: ReturnType<typeof usePRDSelection>;
     onUpdateEpic?: (index: number, updates: Partial<EpicSuggestion>) => void;
     onUpdateStory?: (epicIndex: number, storyIndex: number, updates: Partial<StorySuggestion>) => void;
+    onOpenModal?: (type: 'Epic' | 'Story' | 'Task', epicIndex: number, storyIndex?: number, taskIndex?: number) => void;
 }
 
 export const OutputTree: React.FC<OutputTreeProps> = ({
     epics,
     selectionInfo,
     onUpdateEpic,
-    onUpdateStory
+    onUpdateStory,
+    onOpenModal
 }) => {
     const {
         selection,
@@ -48,6 +50,7 @@ export const OutputTree: React.FC<OutputTreeProps> = ({
                     onToggleTask={(storyIndex, taskIndex) => toggleTask(index, storyIndex, taskIndex)}
                     onExpand={() => toggleExpand(`epic-${index}`)}
                     onExpandStory={(id) => toggleExpand(id)}
+                    onOpenModal={onOpenModal}
 
                     onUpdate={(updates) => onUpdateEpic && onUpdateEpic(index, updates)}
                     onUpdateStory={(storyIndex, updates) => onUpdateStory && onUpdateStory(index, storyIndex, updates)}

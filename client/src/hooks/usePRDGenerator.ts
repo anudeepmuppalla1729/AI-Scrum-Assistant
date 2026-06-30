@@ -10,7 +10,8 @@ interface UsePRDGeneratorReturn {
     uploadProgress: number;
     error: string | null;
     sessionId: string | null;
-    generateSuggestions: (file: File | null, prompt: string, options: GeneratorOptions) => Promise<void>;
+    generatedBacklogId: string | null;
+    generateSuggestions: (file: File | null, prompt: string, options: GeneratorOptions, projectKey?: string, businessDocIds?: string[]) => Promise<void>;
     pushToJira: (projectKey: string, selectedEpics: EpicSuggestion[]) => Promise<PushToJiraResponse>;
     resetgenerator: () => void;
     setEpics: React.Dispatch<React.SetStateAction<EpicSuggestion[]>>;
@@ -28,9 +29,12 @@ export const usePRDGenerator = (
     const [uploadProgress, setUploadProgress] = useState(0);
     const [error, setError] = useState<string | null>(null);
     const [sessionId, setSessionId] = useState<string | null>(initialSessionId || null);
+    const [generatedBacklogId, setGeneratedBacklogId] = useState<string | null>(null);
 
     // For debounced saving
     const [isDirty, setIsDirty] = useState(false);
+
+    const [isPolling, setIsPolling] = useState(false);
 
     // Load session if ID provided
     const loadSession = useCallback(async (id: string) => {
@@ -39,7 +43,17 @@ export const usePRDGenerator = (
             const session = await getPRDSession(id);
             setEpics(session.epics || []);
             setSessionId(session._id);
-            setState(session.epics.length > 0 ? 'ready' : 'idle');
+            setGeneratedBacklogId(session.generatedBacklogId || null);
+            
+            if (session.status === 'processing') {
+                setState('processing');
+                setIsPolling(true);
+            } else if (session.status === 'failed') {
+                setState('idle');
+                setError(session.error || 'Generation failed.');
+            } else {
+                setState(session.epics?.length > 0 ? 'ready' : 'idle');
+            }
         } catch (err: any) {
             console.error(err);
             setError("Failed to load session");
@@ -47,9 +61,34 @@ export const usePRDGenerator = (
         }
     }, []);
 
+    // Polling effect
+    useEffect(() => {
+        let interval: ReturnType<typeof setInterval>;
+        if (isPolling && sessionId) {
+            interval = setInterval(async () => {
+                try {
+                    const session = await getPRDSession(sessionId);
+                    if (session.status === 'ready') {
+                        setEpics(session.epics || []);
+                        setGeneratedBacklogId(session.generatedBacklogId || null);
+                        setState('ready');
+                        setIsPolling(false);
+                    } else if (session.status === 'failed') {
+                        setError(session.error || 'Generation failed.');
+                        setState('idle');
+                        setIsPolling(false);
+                    }
+                } catch (e) {
+                    console.error("Polling error", e);
+                }
+            }, 3000);
+        }
+        return () => clearInterval(interval);
+    }, [isPolling, sessionId]);
+
     // Auto-save effect (Debounced)
     useEffect(() => {
-        if (!sessionId || !isDirty) return;
+        if (!sessionId || !isDirty || state === 'processing' || isPolling) return;
 
         const timeoutId = setTimeout(async () => {
             try {
@@ -61,89 +100,76 @@ export const usePRDGenerator = (
         }, 2000); // 2 second debounce
 
         return () => clearTimeout(timeoutId);
-    }, [epics, sessionId, isDirty]);
+    }, [epics, sessionId, isDirty, state, isPolling]);
 
     // Mark dirty on epics change
     useEffect(() => {
-        if (sessionId && epics.length > 0) {
+        if (sessionId && epics.length > 0 && !isPolling) {
             setIsDirty(true);
         }
-    }, [epics, sessionId]);
+    }, [epics, sessionId, isPolling]);
 
-    const generateSuggestions = async (file: File | null, prompt: string, options: GeneratorOptions) => {
+    const generateSuggestions = async (file: File | null, prompt: string, options: GeneratorOptions, projectKey?: string, businessDocIds?: string[]) => {
         try {
             setError(null);
+            
+            if (!file && !prompt.trim()) {
+                setError("Please upload a PDF or enter instructions.");
+                return;
+            }
 
-            if (file) {
-                setState('uploading');
-                // Simulate upload progress
-                const interval = setInterval(() => {
-                    setUploadProgress(prev => {
-                        if (prev >= 90) {
-                            clearInterval(interval);
-                            return 90;
-                        }
-                        return prev + 10;
-                    });
-                }, 200);
+            setState('uploading');
+            let currentSessionId = sessionId;
 
-                setState('processing');
-                const response: PRDSuggestionsResponse = await uploadPRD(file, boardId);
+            // Create or Update Session first
+            if (currentSessionId) {
+                await updatePRDSession(currentSessionId, { prompt, options });
+            } else {
+                const newSession = await createPRDSession({
+                    epics: [],
+                    prompt,
+                    options,
+                    title: file ? `PRD: ${file.name}` : `Prompt: ${prompt.substring(0, 20)}...`
+                });
+                currentSessionId = newSession._id;
+                setSessionId(newSession._id);
+            }
 
-                clearInterval(interval);
-                setUploadProgress(100);
-
-                if (response.success && response.data?.epics) {
-                    const newEpics = response.data.epics;
-                    setEpics(newEpics);
-
-                    // Create or Update Session
-                    if (sessionId) {
-                        await updatePRDSession(sessionId, { epics: newEpics, prompt, options });
-                    } else {
-                        const newSession = await createPRDSession({
-                            epics: newEpics,
-                            prompt,
-                            options,
-                            title: file.name ? `PRD: ${file.name}` : `Generated PRD`
-                        });
-                        setSessionId(newSession._id);
-                        // Update URL without reload if possible, but let the Page component handle navigation if needed
+            // Simulate upload progress
+            const interval = setInterval(() => {
+                setUploadProgress(prev => {
+                    if (prev >= 90) {
+                        clearInterval(interval);
+                        return 90;
                     }
+                    return prev + 10;
+                });
+            }, 200);
 
+            // Trigger generation
+            const response = await uploadPRD(file, boardId, projectKey, businessDocIds, currentSessionId, prompt);
+            
+            clearInterval(interval);
+            setUploadProgress(100);
+
+            if (response.status === 'processing') {
+                setState('processing');
+                setIsPolling(true);
+            } else {
+                // Synchronous fallback just in case
+                if (response.success && (response.data?.epics || response.data)) {
+                    setEpics(response.data.epics || response.data);
                     setState('ready');
                 } else {
-                    throw new Error(response.message || 'Failed to generate suggestions');
+                    throw new Error(response.message || 'Failed to start generation');
                 }
-            } else if (prompt.trim()) {
-                // Manual prompt logic (placeholder for now)
-                setState('processing');
-                setTimeout(async () => {
-                    const newEpics: EpicSuggestion[] = []; // Empty for now
-                    setEpics(newEpics);
-
-                    if (sessionId) {
-                        await updatePRDSession(sessionId, { epics: newEpics, prompt, options });
-                    } else {
-                        const newSession = await createPRDSession({
-                            epics: newEpics,
-                            prompt,
-                            options,
-                            title: `Prompt: ${prompt.substring(0, 20)}...`
-                        });
-                        setSessionId(newSession._id);
-                    }
-                    setState('ready');
-                    // setError("Text-only generation not yet fully supported by backend.");
-                }, 1000);
-            } else {
-                setError("Please upload a PDF or enter instructions.");
             }
 
         } catch (err: any) {
             console.error(err);
             setError(err.message || "An unexpected error occurred.");
             setState('idle');
+            setIsPolling(false);
         }
     };
 
@@ -175,6 +201,7 @@ export const usePRDGenerator = (
         setError(null);
         setUploadProgress(0);
         setSessionId(null);
+        setGeneratedBacklogId(null);
     };
 
     return {
@@ -183,6 +210,7 @@ export const usePRDGenerator = (
         uploadProgress,
         error,
         sessionId,
+        generatedBacklogId,
         generateSuggestions,
         pushToJira,
         resetgenerator,

@@ -7,14 +7,16 @@ interface ChatLayoutProps {
 
 const ChatLayout: React.FC<ChatLayoutProps> = ({ sidebar, chatArea }) => {
   return (
-    <div className="flex h-full overflow-hidden bg-white">
-      {/* Sidebar - Fixed width on desktop, hidden on mobile logic handled by parent or CSS */}
-      <aside className="w-64 border-r border-gray-200 bg-gray-50 flex-shrink-0 hidden md:flex flex-col">
+    <div className="chat-layout">
+      {/* Sidebar - Fixed width on desktop, hidden on mobile */}
+      <aside className="sidebar hide-mobile border-r border-[var(--color-border)] shadow-sm z-[var(--z-base)]">
         {sidebar}
       </aside>
 
       {/* Main Chat Area */}
-      <main className="flex-1 flex flex-col relative w-full">{chatArea}</main>
+      <main className="chat-main">
+        {chatArea}
+      </main>
     </div>
   );
 };

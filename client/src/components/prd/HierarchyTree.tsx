@@ -22,7 +22,7 @@ export const HierarchyTree: React.FC<HierarchyTreeProps> = ({
 }) => {
   if (!epics.length) {
     return (
-      <div className="text-center py-12 text-gray-500">
+      <div className="text-center py-12 text-[var(--color-text-tertiary)]">
         No suggestions available. Upload a PRD to generate tasks.
       </div>
     );

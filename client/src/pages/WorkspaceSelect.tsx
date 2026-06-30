@@ -58,19 +58,19 @@ export const WorkspaceSelect: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="w-full max-w-4xl space-y-8">
+    <div className="workspace-select-layout">
+      <div className="workspace-select-container">
         <WorkspaceHeader step={1} boardName={undefined} />
 
         {error && (
-          <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
+          <div className="bg-[var(--color-error-light)] border-l-4 border-[var(--color-error)] p-4 mb-4">
             <div className="flex">
               <div className="ml-3">
-                <p className="text-sm text-red-700">{error}</p>
+                <p className="text-sm text-[var(--color-error)] font-medium">{error}</p>
                 {error.includes("backend") && (
                   <button
                     onClick={() => window.location.reload()}
-                    className="mt-2 text-sm text-red-600 font-medium hover:text-red-500 underline"
+                    className="mt-2 text-sm text-[var(--color-error)] font-bold hover:underline"
                   >
                     Retry
                   </button>
@@ -82,16 +82,14 @@ export const WorkspaceSelect: React.FC = () => {
 
         {loading ? (
           <div className="flex justify-center items-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <div className="status-indicator loading"></div>
           </div>
         ) : (
-          <div className="bg-white shadow rounded-lg p-6">
-            <BoardSelector
-              boards={boards}
-              selectedBoardId={null}
-              onSelect={handleBoardSelect}
-            />
-          </div>
+          <BoardSelector
+            boards={boards}
+            selectedBoardId={null}
+            onSelect={handleBoardSelect}
+          />
         )}
       </div>
     </div>

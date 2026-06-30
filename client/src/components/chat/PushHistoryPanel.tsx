@@ -8,11 +8,11 @@ interface PushHistoryPanelProps {
 }
 
 const TYPE_COLORS: Record<string, string> = {
-  Epic: "bg-purple-100 text-purple-700",
-  Story: "bg-green-100 text-green-700",
-  Task: "bg-blue-100 text-blue-700",
-  Subtask: "bg-gray-100 text-gray-600",
-  Bug: "bg-red-100 text-red-600",
+  Epic: "bg-[var(--color-purple-subtle)] text-[var(--color-purple)]",
+  Story: "bg-[var(--color-success-subtle)] text-[var(--color-success)]",
+  Task: "bg-[var(--color-info-subtle)] text-[var(--color-info)]",
+  Subtask: "bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)]",
+  Bug: "bg-[var(--color-error-light)] text-[var(--color-error)]",
 };
 
 const PushHistoryPanel: React.FC<PushHistoryPanelProps> = ({
@@ -64,13 +64,9 @@ const PushHistoryPanel: React.FC<PushHistoryPanelProps> = ({
       {/* Toggle Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed right-4 bottom-4 z-40 flex items-center gap-2 px-4 py-2.5 rounded-full shadow-lg transition-all duration-300 ${
-          isOpen
-            ? "bg-gray-800 text-white hover:bg-gray-900"
-            : "bg-linear-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700"
-        }`}
+        className={`push-history-toggle hover-lift hover-glow shadow-[var(--shadow-elevation-md)] ${isOpen ? "open" : ""}`}
       >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -78,39 +74,43 @@ const PushHistoryPanel: React.FC<PushHistoryPanelProps> = ({
             d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
           />
         </svg>
-        <span className="text-sm font-medium">
+        <span className="push-history-toggle-text">
           Push History
           {history.length > 0 && !isOpen && (
-            <span className="ml-1.5 inline-flex items-center justify-center w-5 h-5 text-[10px] font-bold bg-white/20 rounded-full">
+            <span className="push-history-badge shadow-sm">
               {history.length}
             </span>
           )}
         </span>
       </button>
 
+      {/* Backdrop */}
+      {isOpen && (
+        <div
+          className="modal-overlay"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
       {/* Slide-over Panel */}
-      <div
-        className={`fixed inset-y-0 right-0 z-50 w-96 max-w-[calc(100vw-2rem)] bg-white shadow-2xl transform transition-transform duration-300 ease-in-out flex flex-col ${
-          isOpen ? "translate-x-0" : "translate-x-full"
-        }`}
-      >
+      <div className={`slide-over-panel ${isOpen ? "open" : ""}`}>
         {/* Panel Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-linear-to-r from-gray-50 to-white">
+        <div className="slide-over-header">
           <div>
-            <h2 className="text-lg font-bold text-gray-800">Push History</h2>
-            <p className="text-xs text-gray-400 mt-0.5">
+            <h2 className="heading-md m-0">Push History</h2>
+            <p className="text-xs text-[var(--color-text-tertiary)] font-medium mt-1 uppercase tracking-wider">
               Items pushed to Jira
             </p>
           </div>
           <button
             onClick={() => setIsOpen(false)}
-            className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            className="btn-icon text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-secondary)]"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                strokeWidth={2}
+                strokeWidth={2.5}
                 d="M6 18L18 6M6 6l12 12"
               />
             </svg>
@@ -119,23 +119,23 @@ const PushHistoryPanel: React.FC<PushHistoryPanelProps> = ({
 
         {/* Filter Tabs */}
         {sessionId && (
-          <div className="flex px-5 pt-3 gap-2">
+          <div className="flex px-6 pt-4 gap-2">
             <button
               onClick={() => setFilter("all")}
-              className={`px-3 py-1.5 text-xs rounded-full transition-colors font-medium ${
+              className={`px-4 py-1.5 text-xs rounded-full transition-all font-semibold ${
                 filter === "all"
-                  ? "bg-blue-100 text-blue-700"
-                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                  ? "bg-[var(--color-accent)] text-white shadow-sm"
+                  : "bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)]"
               }`}
             >
               All Sessions
             </button>
             <button
               onClick={() => setFilter("session")}
-              className={`px-3 py-1.5 text-xs rounded-full transition-colors font-medium ${
+              className={`px-4 py-1.5 text-xs rounded-full transition-all font-semibold ${
                 filter === "session"
-                  ? "bg-blue-100 text-blue-700"
-                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                  ? "bg-[var(--color-accent)] text-white shadow-sm"
+                  : "bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)]"
               }`}
             >
               This Session
@@ -144,60 +144,49 @@ const PushHistoryPanel: React.FC<PushHistoryPanelProps> = ({
         )}
 
         {/* History List */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-3">
+        <div className="slide-over-body custom-scrollbar">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <svg
-                className="w-6 h-6 text-gray-300 animate-spin"
-                viewBox="0 0 24 24"
-                fill="none"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                />
-              </svg>
+              <div className="flex gap-1">
+                  <div className="w-2.5 h-2.5 bg-[var(--color-accent)] rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></div>
+                  <div className="w-2.5 h-2.5 bg-[var(--color-accent)] rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></div>
+                  <div className="w-2.5 h-2.5 bg-[var(--color-accent)] rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></div>
+              </div>
             </div>
           ) : history.length === 0 ? (
-            <div className="text-center py-12 text-gray-400">
-              <svg
-                className="w-12 h-12 mx-auto mb-3 text-gray-200"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                />
-              </svg>
-              <p className="text-sm font-medium">No items pushed yet</p>
-              <p className="text-xs mt-1">
+            <div className="empty-state">
+              <div className="empty-state-icon border border-[var(--color-border-light)]">
+                  <svg
+                    className="w-8 h-8 text-[var(--color-text-tertiary)]"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                    />
+                  </svg>
+              </div>
+              <p className="empty-state-title">No items pushed yet</p>
+              <p className="empty-state-desc">
                 Craft backlog items in the chat and push them to Jira
               </p>
             </div>
           ) : (
-            history.map((item) => (
+            history.map((item, index) => (
               <div
                 key={item._id}
-                className="bg-gray-50 rounded-xl p-3.5 border border-gray-100 hover:border-gray-200 transition-colors group"
+                className="history-card animate-fade-in-up"
+                style={{ animationDelay: `${index * 0.05}s` }}
               >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                <div className="history-card-header">
+                  <div className="history-card-content">
+                    <div className="history-card-tags">
                       <span
-                        className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                        className={`history-card-type ${
                           TYPE_COLORS[item.type] || TYPE_COLORS.Task
                         }`}
                       >
@@ -208,35 +197,35 @@ const PushHistoryPanel: React.FC<PushHistoryPanelProps> = ({
                           href={item.jiraUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-xs font-mono text-blue-600 hover:underline"
+                          className="history-card-key"
                         >
                           {item.jiraKey}
                         </a>
                       ) : (
-                        <span className="text-xs font-mono text-blue-600">
+                        <span className="history-card-key">
                           {item.jiraKey}
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-gray-700 font-medium line-clamp-2">
+                    <p className="history-card-summary">
                       {item.summary}
                     </p>
                     {item.parentKey && (
-                      <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
-                        <span>↳</span>
-                        Under {item.parentKey}
+                      <div className="history-card-parent">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11l5-5m0 0l5 5m-5-5v12" /></svg>
+                        <span className="history-card-parent-text">Under {item.parentKey}</span>
                         {item.parentSummary && (
-                          <span className="truncate"> — {item.parentSummary}</span>
+                          <span className="history-card-parent-summary">— {item.parentSummary}</span>
                         )}
-                      </p>
+                      </div>
                     )}
                   </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-[10px] text-gray-400">
+                  <div className="history-card-meta">
+                    <p className="history-card-date">
                       {formatDate(item.createdAt)}
                     </p>
                     {item.storyPoints && (
-                      <p className="text-[10px] text-gray-400 mt-0.5">
+                      <p className="history-card-points">
                         {item.storyPoints} SP
                       </p>
                     )}
@@ -247,14 +236,6 @@ const PushHistoryPanel: React.FC<PushHistoryPanelProps> = ({
           )}
         </div>
       </div>
-
-      {/* Backdrop */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/20 z-40 transition-opacity"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
     </>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { ChevronRight, ChevronDown, CheckSquare, Square } from 'lucide-react';
 import type { EpicSuggestion, StorySuggestion, TaskSuggestion } from '../../types/prd.types';
 import { StoryItem } from './StoryItem';
@@ -18,6 +18,7 @@ interface EpicSectionProps {
     onUpdate: (updates: Partial<EpicSuggestion>) => void;
     onUpdateStory: (storyIndex: number, updates: Partial<StorySuggestion>) => void;
     onUpdateTask: (storyIndex: number, taskIndex: number, updates: Partial<TaskSuggestion>) => void;
+    onOpenModal?: (type: 'Epic' | 'Story' | 'Task', epicIndex: number, storyIndex?: number, taskIndex?: number) => void;
 }
 
 export const EpicSection: React.FC<EpicSectionProps> = ({
@@ -31,24 +32,10 @@ export const EpicSection: React.FC<EpicSectionProps> = ({
     onToggleTask,
     onExpand,
     onExpandStory,
-    onUpdate,
     onUpdateStory,
-    onUpdateTask
+    onUpdateTask,
+    onOpenModal
 }) => {
-    const [isEditing, setIsEditing] = useState(false);
-    const [title, setTitle] = useState(epic.title);
-
-    useEffect(() => {
-        setTitle(epic.title);
-    }, [epic.title]);
-
-    const handleBlur = () => {
-        setIsEditing(false);
-        if (title !== epic.title) {
-            onUpdate({ title });
-        }
-    };
-
     const hasStories = epic.issues && epic.issues.length > 0;
 
     // Calculate intermediate state
@@ -56,63 +43,51 @@ export const EpicSection: React.FC<EpicSectionProps> = ({
     const isIndeterminate = !isSelected && selectedStoryCount > 0 && selectedStoryCount < epic.issues.length;
 
     return (
-        <div className="mb-4 bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md">
+        <div className="card mb-4 overflow-hidden">
             {/* Header / Epic Card */}
             <div className={`
-                p-4 flex items-start space-x-3 
-                ${isExpanded ? 'bg-gray-50/50 border-b border-gray-100' : 'bg-white'}
+                p-4 flex items-start gap-3 
+                ${isExpanded ? 'bg-[var(--color-bg-secondary)] border-b border-[var(--color-border-light)]' : 'bg-[var(--color-surface)]'}
                 transition-colors
             `}>
                 <button
                     onClick={onExpand}
-                    className="mt-1 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="mt-1 text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] transition-colors"
                 >
                     {isExpanded ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
                 </button>
 
                 <div className="flex-1 min-w-0">
-                    <div className="flex items-center space-x-2 mb-1">
-                        <span className="bg-purple-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">
+                    <div className="flex items-center gap-2 mb-1">
+                        <span className="badge badge-accent uppercase tracking-wider">
                             Epic
                         </span>
-                        <div className="flex-1">
-                            {isEditing ? (
-                                <input
-                                    type="text"
-                                    value={title}
-                                    onChange={(e) => setTitle(e.target.value)}
-                                    onBlur={handleBlur}
-                                    autoFocus
-                                    className="w-full text-base font-semibold text-gray-900 border-none p-0 focus:ring-0 bg-transparent placeholder-gray-400"
-                                    placeholder="Enter epic title"
-                                />
-                            ) : (
-                                <h3
-                                    onClick={() => setIsEditing(true)}
-                                    className="text-base font-semibold text-gray-900 truncate cursor-text hover:text-blue-600 transition-colors min-h-[24px]"
-                                    title={epic.title}
-                                >
-                                    {epic.title || <span className="text-gray-400 italic font-normal">Empty epic title (click to edit)</span>}
-                                </h3>
-                            )}
+                        <div className="flex-1 min-w-0">
+                            <h3
+                                onClick={() => onOpenModal && onOpenModal('Epic', epicIndex)}
+                                className="text-base font-semibold text-[var(--color-text-primary)] truncate cursor-pointer hover:text-[var(--color-accent)] transition-colors min-h-[24px] flex items-center gap-2 group/title"
+                                title="Click to view/edit details"
+                            >
+                                {epic.title || <span className="text-[var(--color-text-tertiary)] italic font-normal">Empty epic title</span>}
+                            </h3>
                         </div>
                     </div>
-                    <p className="text-sm text-gray-500 line-clamp-2 pl-1">
+                    <p className="text-sm text-[var(--color-text-secondary)] line-clamp-2 pl-1">
                         {epic.description}
                     </p>
                 </div>
 
                 <button
                     onClick={onToggle}
-                    className="mt-1 text-gray-400 hover:text-blue-500 transition-colors relative"
+                    className="mt-1 text-[var(--color-text-tertiary)] hover:text-[var(--color-accent)] transition-colors relative"
                 >
                     {isSelected ? (
-                        <CheckSquare className="w-5 h-5 text-blue-500" />
+                        <CheckSquare className="w-5 h-5 text-[var(--color-accent)]" />
                     ) : isIndeterminate ? (
                         <div className="relative w-5 h-5">
                             <Square className="w-5 h-5" />
                             <div className="absolute inset-0 flex items-center justify-center">
-                                <div className="w-2.5 h-2.5 bg-blue-500 rounded-sm"></div>
+                                <div className="w-2.5 h-2.5 bg-[var(--color-accent)] rounded-sm"></div>
                             </div>
                         </div>
                     ) : (
@@ -123,7 +98,7 @@ export const EpicSection: React.FC<EpicSectionProps> = ({
 
             {/* Stories List */}
             {isExpanded && hasStories && (
-                <div className="p-2 space-y-1 bg-white">
+                <div className="p-2 space-y-1 bg-[var(--color-surface)]">
                     {epic.issues.map((story, storyIndex) => (
                         <StoryItem
                             key={storyIndex}
@@ -136,6 +111,7 @@ export const EpicSection: React.FC<EpicSectionProps> = ({
                             onExpand={() => onExpandStory(`story-${epicIndex}-${storyIndex}`)}
                             onUpdate={(updates) => onUpdateStory(storyIndex, updates)}
                             onUpdateTask={(taskIndex, updates) => onUpdateTask(storyIndex, taskIndex, updates)}
+                            onOpenModal={(type, _, storyIdx, taskIdx) => onOpenModal && onOpenModal(type, epicIndex, storyIdx !== undefined ? storyIdx : storyIndex, taskIdx)}
                             isLast={storyIndex === epic.issues.length - 1}
                         />
                     ))}
@@ -143,7 +119,7 @@ export const EpicSection: React.FC<EpicSectionProps> = ({
             )}
 
             {isExpanded && !hasStories && (
-                <div className="p-8 text-center text-gray-400 text-sm">
+                <div className="p-8 text-center text-[var(--color-text-tertiary)] text-sm">
                     No user stories generated for this epic.
                 </div>
             )}

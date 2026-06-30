@@ -30,16 +30,19 @@ const WorkspaceDropdown: React.FC<WorkspaceDropdownProps> = ({ isOpen, onClose }
     return (
         <div
             ref={dropdownRef}
-            className="origin-top-left absolute left-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50"
+            className="dropdown shadow-lg left-0 top-[120%] border border-[var(--color-border)] bg-[var(--color-surface)]"
         >
             <div className="py-1">
                 <button
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className="dropdown-item"
                     onClick={() => {
                         navigate('/workspace');
                         onClose();
                     }}
                 >
+                    <svg className="w-4 h-4 mr-2 text-[var(--color-text-tertiary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                    </svg>
                     Switch Workspace
                 </button>
             </div>

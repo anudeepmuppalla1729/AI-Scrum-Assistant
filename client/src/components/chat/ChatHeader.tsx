@@ -10,27 +10,29 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ loading }) => {
     const { boardName} = workspace || {};
 
     return (
-        <header className="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4">
+        <header className="chat-header">
             <div>
-                <h1 className="text-lg font-semibold text-gray-900">AI Scrum Assistant</h1>
-                <p className="text-sm text-gray-500">
+                <h1 className="heading-md">AI Scrum Assistant</h1>
+                <p className="text-sm text-[var(--color-text-tertiary)]">
                     Chat with your sprint-aware assistant
                 </p>
             </div>
 
-            <div className="flex items-center gap-4">
-                <div className="text-right hidden sm:block">
-                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Workspace</p>
-                    <p className="text-sm text-gray-700">
+            <div className="chat-header-actions">
+                <div className="text-right hide-mobile">
+                    <p className="text-caps mb-1">Workspace</p>
+                    <p className="text-sm font-medium text-[var(--color-text-primary)]">
                         {boardName ? `${boardName}` : "No Board"}
                     </p>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="chat-header-divider hide-mobile"></div>
+
+                <div className="status-badge">
                     <span
-                        className={`h-2.5 w-2.5 rounded-full ${loading ? "bg-amber-400 animate-pulse" : "bg-green-500"}`}
+                        className={`status-indicator ${loading ? "loading" : "ready"}`}
                     />
-                    <span className="text-sm text-gray-600 font-medium">
+                    <span className="text-sm text-[var(--color-text-secondary)] font-medium">
                         {loading ? "Thinking..." : "Ready"}
                     </span>
                 </div>

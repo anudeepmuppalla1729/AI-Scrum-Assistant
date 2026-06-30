@@ -7,7 +7,7 @@ const ModeBar: React.FC = () => {
   const location = useLocation();
 
   return (
-    <div className="h-12 border-b border-gray-200 bg-white flex items-center px-4 space-x-2 sticky top-16 z-30">
+    <div className="modebar">
       <ModeNavItem
         label="Chat"
         path="/chat"
@@ -23,6 +23,13 @@ const ModeBar: React.FC = () => {
         path="/prd"
         isActive={location.pathname === "/prd"}
       />
+      <ModeNavItem
+        label="Documents"
+        path="/documents"
+        isActive={location.pathname === "/documents"}
+      />
+      
+      <div className="flex-1"></div>
       <ToolsDropdown />
     </div>
   );

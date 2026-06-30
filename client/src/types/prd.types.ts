@@ -4,6 +4,7 @@ export interface TaskSuggestion {
     summary: string;
     description: string;
     priority: string;
+    acceptance_criteria?: string[];
 }
 
 export interface StorySuggestion {
@@ -13,6 +14,7 @@ export interface StorySuggestion {
     priority: string;
     story_points: number;
     sub_issues: TaskSuggestion[];
+    acceptance_criteria?: string[];
 }
 
 export interface EpicSuggestion {
@@ -24,7 +26,9 @@ export interface EpicSuggestion {
 export interface PRDSuggestionsResponse {
     success: boolean;
     message: string;
-    data: {
+    status?: 'processing' | 'ready' | 'failed';
+    sessionId?: string;
+    data?: {
         epics: EpicSuggestion[];
     };
 }
@@ -57,6 +61,9 @@ export interface PRDSession {
     prompt: string;
     epics: EpicSuggestion[];
     options: GeneratorOptions;
+    generatedBacklogId?: string;
+    status?: 'idle' | 'processing' | 'failed' | 'ready';
+    error?: string;
     createdAt: string;
     updatedAt: string;
 }

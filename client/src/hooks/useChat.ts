@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import type { ChatMessage } from "../types/chat.types";
 import { v4 as uuidv4 } from "uuid";
 
@@ -11,16 +11,29 @@ export const useChat = (
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Track active fetch requests
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Fetch messages when sessionId changes
   useEffect(() => {
+    // Cancel any in-flight request for a previous session
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
     if (!sessionId) {
       setMessages([]);
       return;
     }
 
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
     const fetchMessages = async () => {
       setLoading(true);
+      setError(null);
+      
       try {
         const token = localStorage.getItem("token");
         if (!token) return;
@@ -29,6 +42,7 @@ export const useChat = (
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          signal: abortController.signal,
         });
 
         if (response.ok) {
@@ -40,18 +54,32 @@ export const useChat = (
             content: msg.content,
             createdAt: msg.createdAt || new Date().toISOString(),
           }));
-          setMessages(mapped);
+          
+          if (!abortController.signal.aborted) {
+            setMessages(mapped);
+          }
         } else {
-          console.error("Failed to load messages");
+          if (!abortController.signal.aborted) {
+            setError("Failed to load messages");
+          }
         }
-      } catch (err) {
-        console.error("Error loading messages:", err);
+      } catch (err: any) {
+        if (err.name !== 'AbortError' && !abortController.signal.aborted) {
+          console.error("Error loading messages:", err);
+          setError("Connection error while loading messages");
+        }
       } finally {
-        setLoading(false);
+        if (!abortController.signal.aborted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchMessages();
+    
+    return () => {
+      abortController.abort();
+    };
   }, [sessionId]);
 
   const sendMessage = useCallback(
@@ -112,6 +140,8 @@ export const useChat = (
             createdAt:
               data.assistantMessage.createdAt || new Date().toISOString(),
           };
+          
+          // Only update if we're still on the same session
           setMessages((prev) => [...prev, aiMessage]);
         }
 
@@ -122,7 +152,7 @@ export const useChat = (
         console.error("Chat error:", err);
         setError(err.message || "Something went wrong talking to the AI.");
 
-        // Optional: Remove optimistic message on error
+        // Remove optimistic message on error
         setMessages((prev) => prev.filter((m) => m.id !== tempId));
       } finally {
         setLoading(false);

@@ -26,10 +26,9 @@ const ChatSidebarItem: React.FC<ChatSidebarItemProps> = ({ session, isActive, on
     return (
         <div
             onClick={onClick}
-            className={`group relative flex items-center gap-3 px-3 py-3 rounded-lg cursor-pointer text-sm transition-colors mb-1
-      ${isActive ? "bg-gray-200 text-gray-900" : "text-gray-700 hover:bg-gray-100"}`}
+            className={`sidebar-item group relative mb-1 ${isActive ? "sidebar-item-active" : ""}`}
         >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-gray-500">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`w-4 h-4 ${isActive ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-tertiary)]'}`}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9 7.5h19.5M4.5 3h15a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 19.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15m-3 0-3-3m0 0 5.4-5.492a11.165 11.165 0 0 1 2.133-2.133 9.697 9.697 0 0 1 5.967-2.133 8.1 8.1 0 0 1 3.3.693" />
             </svg>
 
@@ -42,22 +41,22 @@ const ChatSidebarItem: React.FC<ChatSidebarItemProps> = ({ session, isActive, on
                         onChange={e => setEditTitle(e.target.value)}
                         onBlur={() => setIsEditing(false)}
                         onKeyDown={handleKeyDown}
-                        className="w-full bg-white border border-blue-500 rounded px-1 py-0.5 text-sm outline-none"
+                        className="w-full bg-[var(--color-surface)] border border-[var(--color-accent)] rounded px-2 py-0.5 text-sm outline-none shadow-[var(--shadow-accent-glow)]"
                     />
                 </form>
             ) : (
-                <span className="truncate flex-1">{session.title}</span>
+                <span className="text-truncate flex-1">{session.title}</span>
             )}
 
             {/* Actions (visible on hover or active) */}
             {!isEditing && (
-                <div className={`absolute right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ${isActive ? 'opacity-100' : ''}`}>
+                <div className="sidebar-item-actions">
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
                             setIsEditing(true);
                         }}
-                        className="p-1 hover:bg-gray-300 rounded text-gray-500"
+                        className="btn-icon-sm text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-tertiary)] hover:text-[var(--color-text-primary)]"
                         title="Rename"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3.5 h-3.5">
@@ -66,7 +65,7 @@ const ChatSidebarItem: React.FC<ChatSidebarItemProps> = ({ session, isActive, on
                     </button>
                     <button
                         onClick={onDelete}
-                        className="p-1 hover:bg-red-100 hover:text-red-600 rounded text-gray-500"
+                        className="btn-icon-sm text-[var(--color-text-tertiary)] hover:bg-[var(--color-error-light)] hover:text-[var(--color-error)]"
                         title="Delete"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3.5 h-3.5">
