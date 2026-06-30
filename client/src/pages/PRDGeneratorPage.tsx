@@ -144,7 +144,7 @@ const PRDGeneratorPage: React.FC = () => {
             // Find rejected epic IDs based on selection state
             const rejectedEpicIds = epics
                 .filter((epic, index) => {
-                    const isSelected = selectionInfo.selected[index];
+                    const isSelected = selectionInfo.selection[index]?.selected;
                     // Unselected if the epic node itself is false (assuming 1-to-1 mapping)
                     return !isSelected;
                 })
