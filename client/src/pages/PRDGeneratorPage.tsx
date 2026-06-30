@@ -148,7 +148,8 @@ const PRDGeneratorPage: React.FC = () => {
                     // Unselected if the epic node itself is false (assuming 1-to-1 mapping)
                     return !isSelected;
                 })
-                .map(epic => epic.id);
+                .map(epic => epic.id)
+                .filter((id): id is string => id !== undefined);
 
             if (rejectedEpicIds.length > 0) {
                 await updateGeneratedBacklog(backlogId, { rejectedEpicIds });

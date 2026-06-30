@@ -18,6 +18,7 @@ export interface StorySuggestion {
 }
 
 export interface EpicSuggestion {
+    id?: string;
     title: string;
     description: string;
     issues: StorySuggestion[];
