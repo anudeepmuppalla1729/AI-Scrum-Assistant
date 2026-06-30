@@ -1,5 +1,5 @@
-import React from 'react';
-import { ChevronRight, ChevronDown, CheckSquare, Square } from 'lucide-react';
+import React, { useRef, useEffect } from 'react';
+import { ChevronRight } from 'lucide-react';
 import type { EpicSuggestion, StorySuggestion, TaskSuggestion } from '../../types/prd.types';
 import { StoryItem } from './StoryItem';
 import { usePRDSelection } from '../../hooks/usePRDSelection';
@@ -42,84 +42,90 @@ export const EpicSection: React.FC<EpicSectionProps> = ({
     const selectedStoryCount = Object.values(selectionInfo.selection[epicIndex]?.stories || {}).filter(s => s.selected).length;
     const isIndeterminate = !isSelected && selectedStoryCount > 0 && selectedStoryCount < epic.issues.length;
 
+    const checkboxRef = useRef<HTMLInputElement>(null);
+    useEffect(() => {
+        if (checkboxRef.current) {
+            checkboxRef.current.indeterminate = isIndeterminate;
+        }
+    }, [isIndeterminate]);
+
     return (
-        <div className="card mb-4 overflow-hidden">
+        <div className="epic-card">
             {/* Header / Epic Card */}
-            <div className={`
-                p-4 flex items-start gap-3 
-                ${isExpanded ? 'bg-[var(--color-bg-secondary)] border-b border-[var(--color-border-light)]' : 'bg-[var(--color-surface)]'}
-                transition-colors
-            `}>
-                <button
-                    onClick={onExpand}
-                    className="mt-1 text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] transition-colors"
+            <div className="epic-card-header" style={{ borderBottom: isExpanded ? '1px solid var(--color-border-light)' : 'none', alignItems: 'center' }}>
+                <div 
+                    className="flex-1 min-w-0" 
+                    style={{ display: 'flex', gap: 'var(--space-3)' }}
+                    onClick={(e) => {
+                        // Prevent expanding if they clicked the title specifically
+                        if ((e.target as HTMLElement).closest('h3')) return;
+                        onExpand();
+                    }}
                 >
-                    {isExpanded ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
-                </button>
-
-                <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                        <span className="badge badge-accent uppercase tracking-wider">
-                            Epic
-                        </span>
-                        <div className="flex-1 min-w-0">
-                            <h3
-                                onClick={() => onOpenModal && onOpenModal('Epic', epicIndex)}
-                                className="text-base font-semibold text-[var(--color-text-primary)] truncate cursor-pointer hover:text-[var(--color-accent)] transition-colors min-h-[24px] flex items-center gap-2 group/title"
-                                title="Click to view/edit details"
-                            >
-                                {epic.title || <span className="text-[var(--color-text-tertiary)] italic font-normal">Empty epic title</span>}
-                            </h3>
-                        </div>
+                    <div className={`chevron-rotate ${isExpanded ? 'rotated' : ''}`} style={{ marginTop: 'var(--space-1)', color: 'var(--color-text-tertiary)' }}>
+                        <ChevronRight style={{ width: 20, height: 20 }} />
                     </div>
-                    <p className="text-sm text-[var(--color-text-secondary)] line-clamp-2 pl-1">
-                        {epic.description}
-                    </p>
-                </div>
 
-                <button
-                    onClick={onToggle}
-                    className="mt-1 text-[var(--color-text-tertiary)] hover:text-[var(--color-accent)] transition-colors relative"
-                >
-                    {isSelected ? (
-                        <CheckSquare className="w-5 h-5 text-[var(--color-accent)]" />
-                    ) : isIndeterminate ? (
-                        <div className="relative w-5 h-5">
-                            <Square className="w-5 h-5" />
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <div className="w-2.5 h-2.5 bg-[var(--color-accent)] rounded-sm"></div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-1)' }}>
+                            <span className="badge badge-epic" style={{ textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, fontSize: '0.65rem' }}>
+                                Epic
+                            </span>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                                <h3
+                                    onClick={(e) => {
+                                        e.stopPropagation(); // prevent expand
+                                        if (onOpenModal) onOpenModal('Epic', epicIndex);
+                                    }}
+                                    style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--weight-semibold)', color: 'var(--color-text-primary)', cursor: 'pointer', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                                    title="Click to view/edit details"
+                                >
+                                    {epic.title || <span style={{ color: 'var(--color-text-tertiary)', fontStyle: 'italic', fontWeight: 'normal' }}>Empty epic title</span>}
+                                </h3>
                             </div>
                         </div>
-                    ) : (
-                        <Square className="w-5 h-5" />
-                    )}
-                </button>
+                        <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingLeft: 'var(--space-1)' }}>
+                            {epic.description}
+                        </p>
+                    </div>
+                </div>
+                
+                <label className="toggle-switch" style={{ marginLeft: 'var(--space-4)' }}>
+                    <input 
+                        type="checkbox" 
+                        checked={isSelected}
+                        onChange={onToggle}
+                        ref={checkboxRef}
+                    />
+                    <span className="toggle-slider"></span>
+                </label>
             </div>
 
             {/* Stories List */}
             {isExpanded && hasStories && (
-                <div className="p-2 space-y-1 bg-[var(--color-surface)]">
+                <div style={{ borderTop: '1px solid var(--color-border-light)' }}>
                     {epic.issues.map((story, storyIndex) => (
-                        <StoryItem
-                            key={storyIndex}
-                            story={story}
-                            isSelected={!!selectionInfo.selection[epicIndex]?.stories?.[storyIndex]?.selected}
-                            selectionState={selectionInfo.selection[epicIndex]?.stories?.[storyIndex] || { selected: false, tasks: {} }}
-                            isExpanded={!!selectionInfo.expanded[`story-${epicIndex}-${storyIndex}`]}
-                            onToggle={() => onToggleStory(storyIndex)}
-                            onToggleTask={(taskIndex) => onToggleTask(storyIndex, taskIndex)}
-                            onExpand={() => onExpandStory(`story-${epicIndex}-${storyIndex}`)}
-                            onUpdate={(updates) => onUpdateStory(storyIndex, updates)}
-                            onUpdateTask={(taskIndex, updates) => onUpdateTask(storyIndex, taskIndex, updates)}
-                            onOpenModal={(type, _, storyIdx, taskIdx) => onOpenModal && onOpenModal(type, epicIndex, storyIdx !== undefined ? storyIdx : storyIndex, taskIdx)}
-                            isLast={storyIndex === epic.issues.length - 1}
-                        />
+                        <div key={storyIndex} style={{ borderBottom: storyIndex < epic.issues.length - 1 ? '1px solid var(--color-border-light)' : 'none' }}>
+                            <StoryItem
+                                story={story}
+                                isSelected={!!selectionInfo.selection[epicIndex]?.stories?.[storyIndex]?.selected}
+                                selectionState={selectionInfo.selection[epicIndex]?.stories?.[storyIndex] || { selected: false, tasks: {} }}
+                                isExpanded={!!selectionInfo.expanded[`story-${epicIndex}-${storyIndex}`]}
+                                onToggle={() => onToggleStory(storyIndex)}
+                                onToggleTask={(taskIndex) => onToggleTask(storyIndex, taskIndex)}
+                                onExpand={() => onExpandStory(`story-${epicIndex}-${storyIndex}`)}
+                                onUpdate={(updates) => onUpdateStory(storyIndex, updates)}
+                                onUpdateTask={(taskIndex, updates) => onUpdateTask(storyIndex, taskIndex, updates)}
+                                onOpenModal={(type, _, storyIdx, taskIdx) => onOpenModal && onOpenModal(type, epicIndex, storyIdx !== undefined ? storyIdx : storyIndex, taskIdx)}
+                                isLast={storyIndex === epic.issues.length - 1}
+                            />
+                        </div>
                     ))}
                 </div>
             )}
 
             {isExpanded && !hasStories && (
-                <div className="p-8 text-center text-[var(--color-text-tertiary)] text-sm">
+                <div style={{ padding: 'var(--space-8)', textAlign: 'center', color: 'var(--color-text-tertiary)', fontSize: 'var(--text-sm)' }}>
                     No user stories generated for this epic.
                 </div>
             )}
