@@ -21,13 +21,31 @@ const handleAuthError = (res: Response) => {
 };
 
 export const uploadPRD = async (
-  file: File,
+  file: File | null,
   boardId?: number | null,
+  projectKey?: string,
+  businessDocIds?: string[],
+  sessionId?: string,
+  prompt?: string
 ): Promise<PRDSuggestionsResponse> => {
   const formData = new FormData();
-  formData.append("prdFile", file);
+  if (file) {
+      formData.append("prdFile", file);
+  }
   if (boardId !== null && boardId !== undefined) {
     formData.append("boardId", String(boardId));
+  }
+  if (projectKey) {
+    formData.append("projectKey", projectKey);
+  }
+  if (businessDocIds && businessDocIds.length > 0) {
+    formData.append("businessDocIds", JSON.stringify(businessDocIds));
+  }
+  if (sessionId) {
+    formData.append("sessionId", sessionId);
+  }
+  if (prompt) {
+    formData.append("prompt", prompt);
   }
 
   const response = await fetch(`${API_BASE_URL}/suggestions`, {
