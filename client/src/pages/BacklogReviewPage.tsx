@@ -157,7 +157,10 @@ export const BacklogReviewPage: React.FC = () => {
             {/* Content */}
             <div style={{ padding: 'var(--space-6)', maxWidth: '960px', margin: '0 auto', width: '100%' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-                    {orchestrator_contract?.epics?.map((epic: any) => {
+                    {orchestrator_contract?.epics?.filter((epic: any) => {
+                        const epicStatus = epic_statuses?.find((e: any) => e.epic_id === epic.id);
+                        return epicStatus?.status !== 'rejected' && epicStatus?.status !== 'pushed';
+                    }).map((epic: any) => {
                         const epicStories = stories.filter(s => s.epic_id === epic.id);
                         const epicStatus = epic_statuses?.find((e: any) => e.epic_id === epic.id);
                         const isPending = !epicStatus || epicStatus.status === 'pending_review';

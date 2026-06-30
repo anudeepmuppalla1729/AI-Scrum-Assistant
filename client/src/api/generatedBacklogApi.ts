@@ -42,6 +42,23 @@ export const getGeneratedBacklog = async (id: string): Promise<GeneratedBacklog>
   return response.json();
 };
 
+export const updateGeneratedBacklog = async (id: string, updates: any): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}/${id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
+    body: JSON.stringify(updates),
+  });
+
+  handleAuthError(response);
+
+  if (!response.ok) {
+    throw new Error("Failed to update generated backlog");
+  }
+};
+
 export const updateStory = async (backlogId: string, storyId: string, updates: any): Promise<void> => {
   const response = await fetch(`${API_BASE_URL}/${backlogId}/stories/${storyId}`, {
     method: "PATCH",

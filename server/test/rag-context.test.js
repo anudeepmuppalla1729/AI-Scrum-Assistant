@@ -13,18 +13,18 @@ test("buildBoardCollectionName isolates data by board id", () => {
   const board99 = buildBoardCollectionName(99);
 
   assert.notEqual(board12, board99);
-  assert.equal(board12, "scrum_knowledge_base_board_12");
-  assert.equal(board99, "scrum_knowledge_base_board_99");
+  assert.equal(board12, "scrum_kb_board_v3_12");
+  assert.equal(board99, "scrum_kb_board_v3_99");
 });
 
 test("query candidates prefer board collection and fallback to legacy", () => {
   assert.deepEqual(getCandidateCollectionNames(77), [
-    "scrum_knowledge_base_board_77",
+    "scrum_kb_board_v3_77",
     LEGACY_COLLECTION_NAME,
   ]);
   assert.deepEqual(
     getCandidateCollectionNames(77, { includeLegacyFallback: false }),
-    ["scrum_knowledge_base_board_77"],
+    ["scrum_kb_board_v3_77"],
   );
   assert.deepEqual(getCandidateCollectionNames(null), [LEGACY_COLLECTION_NAME]);
 });

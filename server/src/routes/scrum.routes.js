@@ -285,6 +285,7 @@ router.post("/backlog/push", auth, pushBacklogItem);
 
 import {
   getGeneratedBacklog,
+  updateGeneratedBacklog,
   updateStory,
   approveAndPush
 } from "../controllers/generatedBacklog.controller.js";
@@ -298,8 +299,15 @@ import {
  *       - Backlog
  *     security:
  *       - bearerAuth: []
+ *   patch:
+ *     summary: Update generated backlog (e.g., set rejected epics)
+ *     tags:
+ *       - Backlog
+ *     security:
+ *       - bearerAuth: []
  */
 router.get("/backlog/generated/:id", auth, getGeneratedBacklog);
+router.patch("/backlog/generated/:id", auth, updateGeneratedBacklog);
 
 /**
  * @openapi

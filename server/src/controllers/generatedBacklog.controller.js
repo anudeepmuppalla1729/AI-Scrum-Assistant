@@ -25,6 +25,41 @@ export const getGeneratedBacklog = async (req, res) => {
   }
 };
 
+export const updateGeneratedBacklog = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rejectedEpicIds } = req.body;
+
+    const backlog = await GeneratedBacklog.findOne({
+      _id: id,
+      userId: req.user.userId || req.user._id
+    });
+
+    if (!backlog) {
+      return res.status(404).json({ error: "Generated backlog not found" });
+    }
+
+    if (rejectedEpicIds && Array.isArray(rejectedEpicIds)) {
+      let updated = false;
+      backlog.epic_statuses.forEach(e => {
+        if (rejectedEpicIds.includes(e.epic_id)) {
+          e.status = 'rejected';
+          updated = true;
+        }
+      });
+      if (updated) {
+        backlog.markModified('epic_statuses');
+        await backlog.save();
+      }
+    }
+
+    res.status(200).json({ success: true, message: "Backlog updated" });
+  } catch (error) {
+    console.error("Error updating generated backlog:", error);
+    res.status(500).json({ error: "Failed to update generated backlog" });
+  }
+};
+
 export const updateStory = async (req, res) => {
   try {
     const { id, storyId } = req.params;

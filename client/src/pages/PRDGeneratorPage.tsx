@@ -15,6 +15,7 @@ import type { EpicSuggestion, StorySuggestion } from '../types/prd.types';
 import { useWorkspaceStore } from '../store/useWorkspaceStore';
 
 import { getPRDSessions } from '../api/scrumApi';
+import { updateGeneratedBacklog } from '../api/generatedBacklogApi';
 
 const PRDGeneratorPage: React.FC = () => {
     const { sessionId } = useParams();
@@ -130,6 +131,35 @@ const PRDGeneratorPage: React.FC = () => {
             type,
             indices: { epic: epicIndex, story: storyIndex, task: taskIndex }
         });
+    };
+
+    const [isSaving, setIsSaving] = useState(false);
+
+    const handleReviewClick = async () => {
+        const backlogId = generatedBacklogId || sessionId;
+        if (!backlogId) return;
+        
+        setIsSaving(true);
+        try {
+            // Find rejected epic IDs based on selection state
+            const rejectedEpicIds = epics
+                .filter((epic, index) => {
+                    const isSelected = selectionInfo.selected[index];
+                    // Unselected if the epic node itself is false (assuming 1-to-1 mapping)
+                    return !isSelected;
+                })
+                .map(epic => epic.id);
+
+            if (rejectedEpicIds.length > 0) {
+                await updateGeneratedBacklog(backlogId, { rejectedEpicIds });
+            }
+        } catch (err) {
+            console.error("Failed to update rejected epics:", err);
+            // We can still navigate if it fails
+        } finally {
+            setIsSaving(false);
+            navigate(`/backlog/review/${backlogId}`);
+        }
     };
 
     const handleCloseModal = () => {
@@ -326,10 +356,11 @@ const PRDGeneratorPage: React.FC = () => {
                                                 </div>
                                                 <div className="flex gap-3">
                                                     <button 
-                                                        onClick={() => navigate(`/backlog/review/${generatedBacklogId || sessionId}`)}
+                                                        onClick={handleReviewClick}
                                                         className="btn btn-primary font-medium"
+                                                        disabled={isSaving}
                                                     >
-                                                        Review & Push Backlog
+                                                        {isSaving ? "Saving..." : "Review & Push Backlog"}
                                                     </button>
                                                 </div>
                                             </div>
