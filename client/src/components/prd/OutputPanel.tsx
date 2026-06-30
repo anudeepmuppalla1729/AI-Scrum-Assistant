@@ -31,9 +31,9 @@ export const OutputPanel: React.FC<OutputPanelProps> = ({
 
   if (epics.length === 0) {
     return (
-      <div className="empty-state h-full bg-[var(--color-bg-primary)]">
-        <div className="empty-state-icon shadow-sm border border-[var(--color-border-light)]">
-          <svg className="w-8 h-8 text-[var(--color-text-tertiary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div className="empty-state" style={{ height: '100%', background: 'var(--color-bg-primary)' }}>
+        <div className="empty-state-icon" style={{ boxShadow: 'var(--shadow-sm)', border: '1px solid var(--color-border-light)' }}>
+          <svg style={{ width: '32px', height: '32px', color: 'var(--color-text-tertiary)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
           </svg>
         </div>
@@ -49,8 +49,8 @@ export const OutputPanel: React.FC<OutputPanelProps> = ({
   }
 
   return (
-    <div className="h-full overflow-y-auto custom-scrollbar bg-[var(--color-surface)]">
-      <div className="p-4 md:p-6 lg:p-8">
+    <div className="custom-scrollbar" style={{ height: '100%', overflowY: 'auto', background: 'var(--color-bg-secondary)' }}>
+      <div style={{ padding: 'var(--space-6)' }}>
         <OutputTree
           epics={epics}
           selectionInfo={selectionInfo}

@@ -303,10 +303,10 @@ const PRDGeneratorPage: React.FC = () => {
 
                         {/* RIGHT PANEL: Output */}
                         <div className="flex-1 min-w-0 flex flex-col relative bg-[var(--color-surface)]">
-                            <div className="flex-1 overflow-hidden relative min-w-0">
+                            <div className="flex-1 overflow-hidden relative min-w-0 flex flex-col">
                                 {generatorState !== 'idle' && (
-                                    <div className="flex-1 flex flex-col min-h-0 relative">
-                                        <div className="flex-1 min-h-0">
+                                    <div className="flex-1 flex flex-col min-h-0 relative h-full">
+                                        <div className="flex-1 min-h-0 relative h-full overflow-hidden">
                                             <OutputPanel 
                                                 epics={epics} 
                                                 isLoading={generatorState === 'uploading' || generatorState === 'processing'} 

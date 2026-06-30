@@ -36,7 +36,7 @@ export const OutputTree: React.FC<OutputTreeProps> = ({
     // We'll create handlers that wrap the prop callbacks.
 
     return (
-        <div className="space-y-4">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
             {epics.map((epic, index) => (
                 <EpicSection
                     key={index}
@@ -55,14 +55,6 @@ export const OutputTree: React.FC<OutputTreeProps> = ({
                     onUpdate={(updates) => onUpdateEpic && onUpdateEpic(index, updates)}
                     onUpdateStory={(storyIndex, updates) => onUpdateStory && onUpdateStory(index, storyIndex, updates)}
                     onUpdateTask={(storyIndex, taskIndex, updates) => {
-                        // Need a way to update tasks deeply. 
-                        // For now we can leverage onUpdateStory if we treat tasks as part of story data structure,
-                        // OR we might need a dedicated onUpdateTask prop from parent.
-                        // Let's assume onUpdateStory can handle merging sub_issues logic if we construct it right,
-                        // OR we add a specific handler.
-                        // Simplest: pass a generic deep update or specialized.
-                        // Let's modify onUpdateStory to just update the story object which contains sub_issues.
-
                         const story = epic.issues[storyIndex];
                         const newSubIssues = [...story.sub_issues];
                         newSubIssues[taskIndex] = { ...newSubIssues[taskIndex], ...updates };
