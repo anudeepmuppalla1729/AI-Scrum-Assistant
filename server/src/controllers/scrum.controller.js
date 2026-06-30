@@ -71,6 +71,7 @@ export const generateSuggestions = async (req, res) => {
         if (result.orchestrator_contract && result.orchestrator_contract.epics) {
             result.orchestrator_contract.epics.forEach(epic => {
                 epicsMap.set(epic.id, {
+                    id: epic.id,
                     title: epic.title,
                     description: epic.business_goal || "",
                     issues: []

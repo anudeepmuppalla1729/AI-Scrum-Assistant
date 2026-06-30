@@ -143,13 +143,15 @@ const PRDGeneratorPage: React.FC = () => {
         try {
             // Find rejected epic IDs based on selection state
             const rejectedEpicIds = epics
-                .filter((epic, index) => {
+                .map((epic, index) => {
                     const isSelected = selectionInfo.selection[index]?.selected;
                     // Unselected if the epic node itself is false (assuming 1-to-1 mapping)
-                    return !isSelected;
+                    if (!isSelected) {
+                        return epic.id || `epic-${index + 1}`;
+                    }
+                    return null;
                 })
-                .map(epic => epic.id)
-                .filter((id): id is string => id !== undefined);
+                .filter((id): id is string => id !== null);
 
             if (rejectedEpicIds.length > 0) {
                 await updateGeneratedBacklog(backlogId, { rejectedEpicIds });
