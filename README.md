@@ -1,60 +1,73 @@
 # AI Scrum Assistant
 
-_A Multi-Agent, AI-Powered Scrum Companion for Jira
+_A Multi-Agent, AI-Powered Scrum Companion for Jira_
 
-> A full-stack, agentic AI system that automates backlog refinement, PRD parsing, sprint planning, and chat-based agile management — built with Node.js, LangChain.js, Google Gemini, Mongoose, Jira OAuth (3LO), and a modern React 19 frontend.
+> A full-stack, agentic AI system that automates backlog refinement, PRD parsing, sprint planning, and chat-based agile management — built with Node.js, LangChain.js (LangGraph), Google Gemini, Mongoose, Jira OAuth (3LO), and a modern React 19 frontend.
 
 ---
 
 ## 🎯 Overview
 
-The **AI Scrum Assistant** is a modern, multi-agent application designed to act as a *virtual Scrum Master*. By leveraging LLMs alongside your Jira workspace, it minimizes administrative overhead, helping Agile teams focus on delivering value rather than writing tickets or analyzing sprint metrics manually.
+The **AI Scrum Assistant** is a modern, multi-agent application designed to act as a *virtual Scrum Master* and Agile powerhouse. By leveraging advanced Agentic workflows (via LangGraph) alongside your Jira workspace, it minimizes administrative overhead, helping Agile teams focus on delivering value rather than writing tickets or analyzing sprint metrics manually.
 
-### Core Value Proposition
+### Target Personas & Uses
 
-- **Zero-Friction Authentication**: Uses native Atlassian OAuth 2.0 (3LO) for secure, token-less sign-ins and multi-workspace support.
-- **Document to Backlog Generation**: Converts Product Requirement Documents (PRDs) including PDFs into actionable, hierarchical Jira Epics, Stories, and Tasks with one click.
-- **Context-Aware AI Chat**: Engage with an intelligent assistant to summarize sprints, query tickets, or debug Agile blockers, featuring saved sessions.
-- **Sprint Intelligence**: Delivers sprint metrics, daily standup summaries, and AI-driven retrospective reports based on historical Jira operations.
+- **Product Managers**: Automate backlog creation from PRDs. Upload a PRD, and watch the AI break it down into Epics, Stories, and Acceptance Criteria based on historical team capacity.
+- **Scrum Masters**: Generate daily standup summaries and sprint retrospectives instantly. The AI synthesizes recent Jira status changes, comments, and metrics to auto-generate reports.
+- **Developers**: Ask chat questions about the current sprint, specific Jira tickets, or blockers, receiving context-aware answers grounded in your Jira data.
 
 ---
 
 ## 🏗️ Core Architecture & Tech Stack
 
-The system follows a modern MERN-like stack supercharged by specialized AI orchestration agents.
+The system follows a modern MERN-like stack supercharged by a specialized LangGraph AI orchestrator.
+
+### System Architecture Overview
+
+```mermaid
+flowchart LR
+    Client[React 19 Frontend] <--> API[Node.js / Express Backend]
+    API <--> MongoDB[(MongoDB)]
+    API <--> Chroma[(ChromaDB)]
+    API <--> Jira[Jira REST API]
+    
+    subgraph AI Layer
+        API --> LangGraph[LangGraph Agentic System]
+        LangGraph --> LLM[Gemini / LLMs]
+    end
+```
 
 ### Frontend
 - **Framework**: React 19 + Vite + TypeScript
 - **Styling**: Tailwind CSS v4
 - **State Management**: Zustand
 - **Routing**: React Router v7
-- **UI Icons & Markdown**: Lucide React, React Markdown
 
 ### Backend
 - **Framework**: Node.js + Express (ESM)
 - **Database**: MongoDB (via Mongoose)
 - **Authentication**: JWT & Atlassian OAuth (3LO)
-- **API Clients**: `jira.js` for robust REST API interaction
+- **API Clients**: `jira.js`
 
-### AI Layer
-- **Orchestration**: LangChain.js (`@langchain/core`, `@langchain/langgraph`)
+### AI & Agentic Layer
+- **Orchestration**: LangChain.js & LangGraph (`@langchain/langgraph`)
 - **LLM Providers**: Google Gemini (`@langchain/google-genai`), OpenRouter
-- **Vector Database**: ChromaDB (via LangChain for RAG and semantic duplicate detection)
-- **Parsers**: Zod (for structured outputs), `pdf-parse`
+- **Vector Database**: ChromaDB (Semantic duplicate detection & RAG)
+- **Parsers**: Zod, `pdf-parse`
 
 ---
 
 ## 🌟 Key Features
 
-1. **Atlassian OAuth Integration**
-   - Securely log in using your Jira account.
-   - Seamlessly switch between different Atlassian Cloud workspaces/boards.
+1. **Agentic Backlog Generation (LangGraph)**
+   - **Multi-Agent Pipeline**: Uses a stateful LangGraph graph to process PRDs (Text/PDF).
+   - **Intelligent Breakdown**: The Orchestrator node plans Epics based on Jira context (velocity, cadence), while Story Writer nodes concurrently draft individual tickets.
+   - **Self-Correction loop**: A Validation node checks generated stories against Agile best practices. If a story fails, a Feedback node instructs the Story Writer to revise it (up to 3 retries).
+   - **Real-Time Observability**: UI dashboard streams the live execution state of the AI's "thought process" via Server-Sent Events (SSE).
 
-2. **PRD → Jira Ticket Generation Dashboard**
-   - Upload textual or PDF-based PRDs.
-   - AI automatically extracts and structures requirements into Jira hierarchies (Epics → Stories → Tasks).
-   - Review, modify, and push the generated tickets directly to your Jira backlog using a Human-in-the-Loop UI.
-   - Persisted PRD generation sessions via MongoDB.
+2. **Atlassian OAuth Integration**
+   - Securely log in using your Jira account (3LO).
+   - Seamlessly switch between different Atlassian Cloud workspaces/boards.
 
 3. **Intelligent Chatbot Interface**
    - A dedicated Chat space to ask the AI questions about your Jira projects.
@@ -64,6 +77,26 @@ The system follows a modern MERN-like stack supercharged by specialized AI orche
    - Extracts sprint issues to calculate velocity, completion rates, and spillovers.
    - **Daily Standups**: AI-generated standup reports synthesizing recent Jira status changes and comments.
    - **Retrospectives**: Automated "What Went Well" and "Actionable Insights" structured templates analyzing closed sprints.
+
+---
+
+## 🤖 LangGraph Workflow
+
+```mermaid
+flowchart LR
+    Start((Start)) --> Fetch[Jira Context Fetch]
+    Start --> PRD[PRD Ingestion]
+    Fetch --> Orch[Orchestrator]
+    PRD --> Orch
+    Orch --> Route[Routing]
+    Route --> Draft[Story Writer]
+    Draft --> Validate{Validation}
+    Validate -->|Fail| Revise[Feedback]
+    Revise --> Validate
+    Validate -->|Pass| Final[Assembler]
+    Final --> End((End))
+```
+*(For a deeper dive into the agentic system, see [LangGraph Agentic System](docs/langgraph_agentic_system.md))*
 
 ---
 
@@ -77,59 +110,45 @@ The system follows a modern MERN-like stack supercharged by specialized AI orche
 - **AI Keys**: A Google Gemini API Key and/or OpenRouter API Key.
 
 ### 1. Vector Database Setup
-The AI semantic search modules rely on ChromaDB. Run ChromaDB using Docker on port 8000:
+Run ChromaDB using Docker on port 8000:
 ```bash
 docker run -d --name chroma -p 8000:8000 chromadb/chroma
 ```
 *(To stop: `docker stop chroma` | To start again: `docker start chroma`)*
 
 ### 2. Environment Variables
-Create a `.env` file in the `backend/` directory based on the following template:
-
+Create a `.env` file in the `server/` directory:
 ```env
-# Server Configuration
 PORT=2000
-
-# Database Configuration
 MONGODB_URI=mongodb+srv://<username>:<password>@cluster...
 DB_NAME=ass-project
-
-# Authentication 
 JWT_SECRET=YOUR_SECURE_JWT_SECRET
-
-# Atlassian OAuth Application Credentials (3LO)
 ATLASSIAN_CLIENT_ID=your_atlassian_client_id
 ATLASSIAN_CLIENT_SECRET=your_atlassian_client_secret
 ATLASSIAN_REDIRECT_URI=http://localhost:5173/oauth/callback
 FRONTEND_SUCCESS_URL=http://localhost:5173/oauth/success
-
-# AI LLM Services
 GOOGLE_API_KEY=your_google_api_key
 OPENROUTER_API_KEY=your_openrouter_api_key
-
-# Optional legacy Jira settings
-JIRA_STORY_POINTS_FIELD=customfield_10016
-JIRA_EPIC_NAME_FIELD_ID=customfield_10011
 ```
 
 ### 3. Application Initialization
-Clone the repository and set up the independent frontend and backend services.
-
 **Terminal 1 (Backend):**
 ```bash
-cd backend
-npm install
-npm run dev
+cd server
+pnpm install
+pnpm run dev
 ```
 
 **Terminal 2 (Frontend):**
 ```bash
-cd frontend
+cd client
 npm install
 npm run dev
 ```
 
-Access the application in your browser at `http://localhost:5173` (or the port Vite designates).
+*(Note: Use `pnpm` in the server directory as per project guidelines).*
+
+Access the application in your browser at `http://localhost:5173`.
 
 ---
 
@@ -137,51 +156,23 @@ Access the application in your browser at `http://localhost:5173` (or the port V
 
 ```text
 ai-scrum-assistant/
-├── backend/                  # Orchestration, AI logic, and APIs
+├── server/                   # Orchestration, AI logic, and APIs
 │   ├── src/
+│   │   ├── backlog-generator/ # LangGraph Agentic System
 │   │   ├── controllers/      # Route logic handlers
 │   │   ├── routes/           # Express API endpoints
 │   │   ├── services/         # Modular services
-│   │   │   ├── ai/           # LangChain flows, chatbot, PRD parsers
-│   │   │   ├── automation/   # (Reserved for automations)
-│   │   │   └── jira/         # Jira API wrappers & agile metrics
-│   │   ├── index.js          # App initialization
 │   │   └── ...
-│   ├── .env                  # Backend configuration
 │   └── package.json
-│
-├── frontend/                 # React 19 Client
+├── client/                   # React 19 Client
 │   ├── src/
 │   │   ├── components/       # Reusable UI parts & layouts
-│   │   ├── pages/            # Core views (Dashboard, Chat, PRDGenerator, Sprint)
-│   │   ├── store/            # Zustand global stores
-│   │   ├── hooks/            # Custom React Hooks
-│   │   └── main.tsx          # React Root
+│   │   ├── pages/            # Core views
+│   │   └── store/            # Zustand global stores
 │   └── package.json
-│
+├── docs/                     # Architectural Documentation
 └── README.md
 ```
-
----
-
-## 🛣️ API Capabilities Snapshot
-The backend securely interfaces via JWT authentication once logged in with OAuth.
-
-- **OAuth**: `/api/v1/auth/jira/login`, `/api/v1/auth/jira/callback`
-- **Jira Cloud/Agile**: `/api/v1/jira-cloud/cloud-id`, `/api/v1/jira-board/boards`, `/api/v1/jira-sprint/boards/:id/sprints`
-- **Scrum AI Operations**: 
-  - `POST /api/v1/scrum/suggestions` (RAG PRD parsing)
-  - `POST /api/v1/scrum/pushSuggestionsToJira` (Creation logic)
-  - `GET /api/v1/scrum/standup`
-  - `GET /api/v1/scrum/retrospective`
-- **Chat & Sessions**: `/api/v1/scrum/chat/session`, `/api/v1/scrum/chat/:sessionId/messages`
-
----
-
-## 🤝 Contribution & License
-This application is currently in development. Open to contributions!
-
-**Author**: MAC (anudeepmuppalla@gmail.com)
 
 ---
 
@@ -198,7 +189,7 @@ To migrate shared legacy data:
 
 ```bash
 cd server
-npm run migrate:rag:boards -- --defaultBoardId=<board-id>
+pnpm run migrate:rag:boards -- --defaultBoardId=<board-id>
 ```
 
 Use `--dryRun=true` first to validate migration behavior without writes.
