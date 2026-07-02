@@ -11,6 +11,13 @@ const handleAuthError = (res: Response) => {
   }
 };
 
+export interface EpicStatus {
+  epic_id: string;
+  status: 'pending_review' | 'approved' | 'pushing' | 'pushed' | 'failed' | 'rejected';
+  jira_push_result: any;
+  pushed_at: string | null;
+}
+
 export interface GeneratedBacklog {
   _id: string;
   userId: string;
@@ -19,7 +26,7 @@ export interface GeneratedBacklog {
   status: 'pending_review' | 'partially_pushed' | 'fully_pushed' | 'rejected';
   orchestrator_contract: any;
   stories: any[];
-  epic_statuses: any[];
+  epic_statuses: EpicStatus[];
   validation_report: any;
   createdAt: string;
   updatedAt: string;

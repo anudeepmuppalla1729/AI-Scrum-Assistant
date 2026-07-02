@@ -24,20 +24,21 @@ export const usePRDSelection = (epics: EpicSuggestion[]) => {
     const [expanded, setExpanded] = useState<ExpandedState>({});
 
     // Initialize selection state when epics are loaded
-    const initializeSelection = useCallback((newEpics: EpicSuggestion[]) => {
+    const initializeSelection = useCallback((newEpics: EpicSuggestion[], rejectedEpicIds: string[] = []) => {
         const initialState: SelectionState = {};
         newEpics.forEach((epic, epicIndex) => {
+            const isRejected = rejectedEpicIds.includes(epic.id || `epic-${epicIndex + 1}`);
             initialState[epicIndex] = {
-                selected: true,
+                selected: !isRejected,
                 stories: {}
             };
             epic.issues.forEach((story, storyIndex) => {
                 initialState[epicIndex].stories[storyIndex] = {
-                    selected: true,
+                    selected: !isRejected,
                     tasks: {}
                 };
                 story.sub_issues.forEach((_, taskIndex) => {
-                    initialState[epicIndex].stories[storyIndex].tasks[taskIndex] = true;
+                    initialState[epicIndex].stories[storyIndex].tasks[taskIndex] = !isRejected;
                 });
             });
         });

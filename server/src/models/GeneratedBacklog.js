@@ -27,7 +27,7 @@ const epicStatusSchema = new mongoose.Schema({
   epic_id: { type: String, required: true },
   status: { 
     type: String, 
-    enum: ["pending_review", "approved", "pushing", "pushed", "failed"], 
+    enum: ["pending_review", "approved", "pushing", "pushed", "failed", "rejected"], 
     default: "pending_review" 
   },
   jira_push_result: { type: mongoose.Schema.Types.Mixed, default: null },

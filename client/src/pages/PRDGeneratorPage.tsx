@@ -110,12 +110,55 @@ const PRDGeneratorPage: React.FC = () => {
     // Modal State
     const [isPushModalOpen, setIsPushModalOpen] = useState(false);
 
-    // Sync epics to selection hook when they change
+    // Sync epics to selection hook when they change, taking into account any rejected ones from DB
     useEffect(() => {
-        if (epics.length > 0) {
-            initializeSelection(epics);
-        }
-    }, [epics, initializeSelection]);
+        const syncSelection = async () => {
+            if (epics.length > 0) {
+                let rejectedIds: string[] = [];
+                const backlogId = generatedBacklogId || sessionId;
+                if (backlogId) {
+                    try {
+                        const { getGeneratedBacklog } = await import('../api/generatedBacklogApi');
+                        const backlog = await getGeneratedBacklog(backlogId);
+                        rejectedIds = (backlog.epic_statuses || [])
+                            .filter(s => s.status === 'rejected')
+                            .map(s => s.epic_id);
+                    } catch (e) {
+                        console.error("Failed to fetch backlog for selection sync", e);
+                    }
+                }
+                initializeSelection(epics, rejectedIds);
+            }
+        };
+        syncSelection();
+    }, [epics, generatedBacklogId, sessionId, initializeSelection]);
+
+    // Auto-save selection state to generated backlog
+    useEffect(() => {
+        const backlogId = generatedBacklogId || sessionId;
+        if (!backlogId) return;
+
+        const timeoutId = setTimeout(async () => {
+            const rejectedEpicIds = epics
+                .map((epic, index) => {
+                    const isSelected = selectionInfo.selection[index]?.selected;
+                    if (isSelected === false) {
+                        return epic.id || `epic-${index + 1}`;
+                    }
+                    return null;
+                })
+                .filter((id): id is string => id !== null);
+
+            try {
+                const { updateGeneratedBacklog } = await import('../api/generatedBacklogApi');
+                await updateGeneratedBacklog(backlogId, { rejectedEpicIds });
+            } catch (err) {
+                console.error("Failed to auto-save rejected epics", err);
+            }
+        }, 1000);
+
+        return () => clearTimeout(timeoutId);
+    }, [selectionInfo.selection, epics, generatedBacklogId, sessionId]);
 
     // Modal Details State
     const [modalState, setModalState] = useState<{
@@ -153,9 +196,7 @@ const PRDGeneratorPage: React.FC = () => {
                 })
                 .filter((id): id is string => id !== null);
 
-            if (rejectedEpicIds.length > 0) {
-                await updateGeneratedBacklog(backlogId, { rejectedEpicIds });
-            }
+            await updateGeneratedBacklog(backlogId, { rejectedEpicIds });
         } catch (err) {
             console.error("Failed to update rejected epics:", err);
             // We can still navigate if it fails
