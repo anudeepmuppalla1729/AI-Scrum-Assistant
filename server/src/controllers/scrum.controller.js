@@ -1,7 +1,7 @@
 import { runBacklogGenerator } from "../backlog-generator/index.js";
 import { PushAISuggestionsBodySchema } from "../utils/schemas.js";
-import { pushAISuggestionsHierarchy } from "../services/jira/transformers/hierarchy.service.js";
-import { getJiraClient } from "../services/jira/jiraClient.js";
+import { pushAISuggestionsHierarchy } from "../integrations/jira/services/transformers/hierarchy.service.js";
+import { getJiraClient } from "../integrations/jira/services/jiraClient.js";
 import { normalizeBoardId } from "../services/ai/rag.context.js";
 import { extractTextFromPdfBuffer } from "../services/ai/prdToTickets.service.js";
 import BusinessDocument from "../models/BusinessDocument.js";

@@ -1,6 +1,6 @@
 import GeneratedBacklog from "../models/GeneratedBacklog.js";
-import { getJiraClient } from "./jira/jiraClient.js";
-import { pushAISuggestionsHierarchy } from "./jira/transformers/hierarchy.service.js";
+import { getJiraClient } from "../integrations/jira/services/jiraClient.js";
+import { pushAISuggestionsHierarchy } from "../integrations/jira/services/transformers/hierarchy.service.js";
 
 // In-memory queue for background Jira pushes
 // This avoids needing Redis/BullMQ for local environments while still providing background processing
@@ -74,12 +74,14 @@ class PushWorkerQueue {
         const stories = backlog.stories.filter(s => s.epic_id === epicDef.id);
         for (const story of stories) {
           epicObj.issues.push({
+            type: "story",
             summary: story.user_story,
             description: story.description,
             acceptance_criteria: story.acceptance_criteria,
             priority: story.priority,
             story_points: story.story_points,
             sub_issues: (story.subtasks || []).map(st => ({
+              type: "subtask",
               summary: st.title,
               description: st.description,
               acceptance_criteria: st.acceptance_criteria,

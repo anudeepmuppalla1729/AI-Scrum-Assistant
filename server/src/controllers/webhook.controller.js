@@ -1,7 +1,7 @@
 import { upsertTicket, upsertSprint } from "../services/ai/rag.service.js";
 import { generateSprintRetrospective } from "../services/automation/automation.service.js";
 import User from "../models/User.js";
-import { getJiraClient } from "../services/jira/jiraClient.js";
+import { getJiraClient } from "../integrations/jira/services/jiraClient.js";
 import { extractBoardIdFromJiraPayload } from "../services/ai/rag.context.js";
 
 export const handleJiraWebhook = async (req, res) => {

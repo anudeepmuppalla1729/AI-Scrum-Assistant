@@ -1,5 +1,5 @@
 import axios from "axios";
-import User from "../models/User.js";
+import User from "../../../models/User.js";
 
 export const getBoards = async (req, res) => {
   try {

@@ -1,5 +1,5 @@
 import axios from "axios";
-import User from "../models/User.js";
+import User from "../../../models/User.js";
 
 export const getSprints = async (req, res) => {
   try {

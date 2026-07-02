@@ -24,6 +24,17 @@ async function startServer() {
     console.log(`🧹 Cleaned up ${cleanupRes.modifiedCount} stuck background sessions.`);
   }
 
+  // Reset any epics stuck in 'pushing' state
+  const { default: GeneratedBacklog } = await import("./models/GeneratedBacklog.js");
+  const backlogCleanupRes = await GeneratedBacklog.updateMany(
+    { "epic_statuses.status": "pushing" },
+    { $set: { "epic_statuses.$[elem].status": "failed", "epic_statuses.$[elem].jira_push_result": { error: "Push interrupted by server restart." } } },
+    { arrayFilters: [{ "elem.status": "pushing" }] }
+  );
+  if (backlogCleanupRes.modifiedCount > 0) {
+    console.log(`🧟 Cleaned up ${backlogCleanupRes.modifiedCount} backlogs with zombie pushing epics.`);
+  }
+
   app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT} Baby!!!`);
     console.log(`Open in browser: http://localhost:${PORT} Baby!!!`);

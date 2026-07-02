@@ -1,6 +1,6 @@
 import { model } from "../ai/model.service.js";
 import { queryKnowledgeBase } from "../ai/rag.service.js";
-import { search } from "../jira/issue_service.js";
+import { search } from "../../integrations/jira/services/issue_service.js";
 
 export const generateDailyStandup = async (client, projectKey) => {
   try {

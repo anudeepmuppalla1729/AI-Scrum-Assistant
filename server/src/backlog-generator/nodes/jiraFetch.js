@@ -1,4 +1,4 @@
-import { getJiraClient } from "../../services/jira/jiraClient.js";
+import { getJiraClient } from "../../integrations/jira/services/jiraClient.js";
 import User from "../../models/User.js";
 import { AgileClient } from "jira.js";
 

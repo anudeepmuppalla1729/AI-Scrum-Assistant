@@ -153,7 +153,7 @@ export const approveAndPush = async (req, res) => {
 
     // Enqueue the push job
     pushWorker.add({
-      backlogId: id,
+      backlogId: backlog._id,
       epicId,
       user: req.user
     });

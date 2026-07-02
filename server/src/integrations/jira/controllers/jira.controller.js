@@ -1,7 +1,7 @@
 import querystring from "querystring";
 import axios from "axios";
-import User from "../models/User.js";
-import { generateToken } from "../utils/generateToken.js";
+import User from "../../../models/User.js";
+import { generateToken } from "../../../utils/generateToken.js";
 
 export const startJiraAuth = (req, res) => {
   const base = "https://auth.atlassian.com/authorize";

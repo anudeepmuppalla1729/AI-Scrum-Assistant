@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { auth } from "../middleware/auth.js";
+import { auth } from "../../../middleware/auth.js";
 import { createIssue } from "../controllers/jiraIssueCreate.controller.js";
 
 const router = Router();

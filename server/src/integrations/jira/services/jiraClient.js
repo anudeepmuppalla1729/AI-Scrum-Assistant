@@ -1,7 +1,7 @@
 import { Version3Client } from "jira.js";
 import axios from "axios";
 import "dotenv/config";
-import User from "../../models/User.js";
+import User from "../../../models/User.js";
 import "dotenv/config";
 
 /**
