@@ -1,0 +1,58 @@
+.toggle {
+  position: relative;
+  border-radius: var(--radius-full);
+  transition: background var(--transition-fast);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.toggle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.toggle-md {
+  width: 40px;
+  height: 22px;
+}
+
+.toggle-sm {
+  width: 32px;
+  height: 18px;
+}
+
+.toggle-on {
+  background: var(--color-primary);
+}
+
+.toggle-off {
+  background: var(--color-border);
+}
+
+.toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  background: white;
+  border-radius: 50%;
+  transition: transform var(--transition-fast);
+  box-shadow: var(--shadow-xs);
+}
+
+.toggle-md .toggle-thumb {
+  width: 18px;
+  height: 18px;
+}
+
+.toggle-sm .toggle-thumb {
+  width: 14px;
+  height: 14px;
+}
+
+.toggle-on .toggle-thumb {
+  transform: translateX(18px);
+}
+
+.toggle-on.toggle-sm .toggle-thumb {
+  transform: translateX(14px);
+}
