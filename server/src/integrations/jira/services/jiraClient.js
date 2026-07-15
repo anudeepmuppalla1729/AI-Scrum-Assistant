@@ -143,3 +143,25 @@ export const resolveIssueTypeId = async (client, projectKey, predicate) => {
   const match = types.find(predicate);
   return match?.id || null;
 };
+
+/**
+ * Search for issues using JQL via the jira.js SDK.
+ * Replaces raw axios + Basic Auth search patterns.
+ * Returns { issues: Array, total: number }.
+ */
+export const searchIssues = async (client, { jql, maxResults = 20, fields = ["summary", "issuetype", "status", "parent"] }) => {
+  const results = await client.issueSearch.searchForIssuesUsingJqlPost({
+    jql,
+    maxResults,
+    fields,
+  });
+  return { issues: results.issues || [], total: results.total || 0 };
+};
+
+/**
+ * Create a single issue via the jira.js SDK with retry support.
+ * Replaces raw axios + Basic Auth issue creation patterns.
+ */
+export const createIssue = async (client, fields) => {
+  return await createIssueWithRetry(client, { fields });
+};

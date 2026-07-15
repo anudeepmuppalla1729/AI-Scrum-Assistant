@@ -1,7 +1,6 @@
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
-import axios from "axios";
-import User from "../../../models/User.js";
+import { getJiraClient, searchIssues } from "../../../integrations/jira/services/jiraClient.js";
 
 /**
  * Creates a backlog search tool bound to a specific user's Jira credentials.
@@ -12,20 +11,7 @@ export const createBacklogSearchTool = (userId) => {
   return tool(
     async ({ projectKey, searchText, issueType }) => {
       try {
-        // Use Basic Auth from .env
-        if (
-          !process.env.JIRA_HOST ||
-          !process.env.JIRA_EMAIL ||
-          !process.env.JIRA_API_TOKEN
-        ) {
-          return JSON.stringify({
-            error: "Jira Basic Auth credentials not found in .env",
-          });
-        }
-
-        const basicAuth = Buffer.from(
-          `${process.env.JIRA_EMAIL}:${process.env.JIRA_API_TOKEN.replace(/"/g, "")}`,
-        ).toString("base64");
+        const client = await getJiraClient({ userId });
 
         // Build JQL query
         let jql = `project = "${projectKey}"`;
@@ -43,21 +29,13 @@ export const createBacklogSearchTool = (userId) => {
 
         jql += ` ORDER BY updated DESC`;
 
-        const url = `${process.env.JIRA_HOST}/rest/api/3/search/jql`;
-        const params = new URLSearchParams({
+        const { issues } = await searchIssues(client, {
           jql,
-          maxResults: "20",
-          fields: "summary,issuetype,status,parent,priority,description",
+          maxResults: 20,
+          fields: ["summary", "issuetype", "status", "parent", "priority", "description"],
         });
 
-        const response = await axios.get(`${url}?${params.toString()}`, {
-          headers: {
-            Authorization: `Basic ${basicAuth}`,
-            Accept: "application/json",
-          },
-        });
-
-        const issues = (response.data?.issues || []).map((issue) => ({
+        const mapped = issues.map((issue) => ({
           key: issue.key,
           summary: issue.fields?.summary,
           type: issue.fields?.issuetype?.name,
@@ -68,8 +46,8 @@ export const createBacklogSearchTool = (userId) => {
         }));
 
         return JSON.stringify({
-          totalResults: response.data?.total || 0,
-          issues,
+          totalResults: mapped.length,
+          issues: mapped,
         });
       } catch (error) {
         console.error(
@@ -77,7 +55,7 @@ export const createBacklogSearchTool = (userId) => {
           error.response?.data || error.message,
         );
 
-        if (error.response?.status === 401) {
+        if (error.message?.includes("Jira") || error.response?.status === 401) {
           return JSON.stringify({
             error:
               "Jira session expired. The user needs to re-authenticate with Jira.",

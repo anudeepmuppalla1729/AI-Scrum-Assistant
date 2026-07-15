@@ -11,7 +11,7 @@ if (!MIMO_API_KEY) {
 
 export const model = new ChatOpenAI({
   apiKey: MIMO_API_KEY,
-  modelName: "mimo-v2.5",
+  model: "mimo-v2.5",
   configuration: {
     baseURL: MIMO_BASE_URL,
   },
@@ -28,7 +28,7 @@ export const model = new ChatOpenAI({
 
 export const proModel = new ChatOpenAI({
   apiKey: MIMO_API_KEY,
-  modelName: "mimo-v2.5-pro",
+  model: "mimo-v2.5-pro",
   configuration: {
     baseURL: MIMO_BASE_URL,
   },

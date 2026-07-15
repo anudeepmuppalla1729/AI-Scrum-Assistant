@@ -1,5 +1,5 @@
 import GeneratedBacklog from "../models/GeneratedBacklog.js";
-import { pushWorker } from "../services/pushWorker.js";
+import { pushQueue } from "../integrations/jira/services/pushWorker.js";
 
 export const getGeneratedBacklog = async (req, res) => {
   try {
@@ -152,7 +152,7 @@ export const approveAndPush = async (req, res) => {
     }
 
     // Enqueue the push job
-    pushWorker.add({
+    await pushQueue.add("push-to-jira", {
       backlogId: backlog._id,
       epicId,
       user: req.user

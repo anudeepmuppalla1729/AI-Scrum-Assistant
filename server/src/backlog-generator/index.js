@@ -225,6 +225,7 @@ const runBacklogGenerator = async (input) => {
         });
 
         // Small delay so the dashboard can render start before we emit end
+        await new Promise((r) => setTimeout(r, 50));
         emitAgentEvent("node_end", {
           node: nodeName,
           label: NODE_LABELS[nodeName] || nodeName,

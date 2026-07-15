@@ -1,4 +1,4 @@
-import { getJiraClient } from "../../integrations/jira/services/jiraClient.js";
+import { getJiraClient, searchIssues } from "../../integrations/jira/services/jiraClient.js";
 import User from "../../models/User.js";
 import { AgileClient } from "jira.js";
 
@@ -9,11 +9,12 @@ const jiraFetchNode = async (state) => {
   const client = await getJiraClient(user);
   let openBugs = 0;
   try {
-    const bugSearch = await client.issueSearch.searchForIssuesUsingJqlPost({
+    const { total } = await searchIssues(client, {
       jql: `project = "${projectKey}" AND issuetype in (Bug, bug) AND statusCategory != Done`,
-      maxResults: 0
+      maxResults: 0,
+      fields: ["summary"],
     });
-    openBugs = bugSearch.total || 0;
+    openBugs = total;
   } catch (e) {
     console.warn("Failed to fetch open bugs, defaulting to 0", e);
   }

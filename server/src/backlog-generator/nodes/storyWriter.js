@@ -1,16 +1,23 @@
 import { model } from "../../services/ai/model.service.js";
 import { storyWriterPrompt } from "../prompts/storyWriter.prompt.js";
 import { StoryOutputSchema } from "../schemas/storyOutput.schema.js";
-import { llmQueue } from "../utils/queue.js";
+import { addLLMJob, registerLLMJobHandler } from "../utils/llmQueue.js";
+
+// Register the BullMQ job handler at module level
+const structuredChain = model.withStructuredOutput(StoryOutputSchema, {
+  method: "jsonMode",
+  name: "story_output",
+});
+const chain = storyWriterPrompt.pipe(structuredChain);
+
+registerLLMJobHandler("generate-story", async (data) => {
+  return await chain.invoke(data);
+});
+
 const storyWriterNode = async (input) => {
-  const structuredChain = model.withStructuredOutput(StoryOutputSchema, {
-    method: "jsonMode",
-    name: "story_output",
-  });
-  const chain = storyWriterPrompt.pipe(structuredChain);
   let output;
   try {
-    output = await llmQueue.add(() => chain.invoke({
+    output = await addLLMJob("generate-story", {
       businessSummary: input.business_summary,
       epicTitle: input.epic_context.title,
       epicDescription: input.epic_context.description,
@@ -21,7 +28,7 @@ const storyWriterNode = async (input) => {
       bizChunks: input.biz_chunks ? input.biz_chunks.join("\n---\n") : "",
       velocityRef: JSON.stringify(input.velocity_reference, null, 2),
       storyStub: JSON.stringify(input.story_stub, null, 2)
-    }));
+    });
   } catch (error) {
     const errorMessage = error.message || error.toString();
     console.error(`Story writer failed for ${input.story_id}:`, errorMessage);

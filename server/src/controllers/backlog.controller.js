@@ -1,6 +1,6 @@
-import axios from "axios";
 import User from "../models/User.js";
 import PushedBacklog from "../models/PushedBacklog.js";
+import { getJiraClient, searchIssues, createIssue } from "../integrations/jira/services/jiraClient.js";
 
 /**
  * Push a single crafted backlog item to Jira with proper parent linking.
@@ -9,13 +9,9 @@ export const pushBacklogItem = async (req, res) => {
   try {
     const userId = req.user.userId;
 
-    if (!process.env.JIRA_HOST || !process.env.JIRA_EMAIL || !process.env.JIRA_API_TOKEN) {
-      return res.status(500).json({ error: "Jira Basic Auth credentials missing in .env" });
+    if (!req.user) {
+      return res.status(401).json({ error: "Unauthorized" });
     }
-
-    const basicAuth = Buffer.from(
-      `${process.env.JIRA_EMAIL}:${process.env.JIRA_API_TOKEN.replace(/"/g, '')}`
-    ).toString('base64');
 
     const { projectKey, sessionId, item } = req.body;
 
@@ -24,6 +20,8 @@ export const pushBacklogItem = async (req, res) => {
         .status(400)
         .json({ error: "projectKey, item.type, and item.summary are required." });
     }
+
+    const client = await getJiraClient(req.user);
 
     // Build Jira issue payload
     const fields = {
@@ -90,21 +88,8 @@ export const pushBacklogItem = async (req, res) => {
       fields[storyPointsField] = item.storyPoints;
     }
 
-    // Create the issue via Jira API
-    const url = `${process.env.JIRA_HOST}/rest/api/3/issue`;
-    const response = await axios.post(
-      url,
-      { fields },
-      {
-        headers: {
-          Authorization: `Basic ${basicAuth}`,
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    const createdIssue = response.data;
+    // Create the issue via Jira SDK
+    const createdIssue = await createIssue(client, fields);
 
     const jiraUrl = `${process.env.JIRA_HOST}/browse/${createdIssue.key}`;
 
@@ -134,8 +119,8 @@ export const pushBacklogItem = async (req, res) => {
       pushedItem,
     });
   } catch (err) {
-    if (err.response?.status === 401) {
-      console.error("Jira Access Token Expired");
+    if (err.response?.status === 401 || err.message?.includes("Jira")) {
+      console.error("Jira authentication error:", err.message);
       return res
         .status(401)
         .json({ error: "Jira session expired. Please login again." });
@@ -181,15 +166,11 @@ export const getPushHistory = async (req, res) => {
  */
 export const searchBacklog = async (req, res) => {
   try {
-    const userId = req.user.userId;
-
-    if (!process.env.JIRA_HOST || !process.env.JIRA_EMAIL || !process.env.JIRA_API_TOKEN) {
-      return res.status(500).json({ error: "Jira Basic Auth credentials missing in .env" });
+    if (!req.user) {
+      return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const basicAuth = Buffer.from(
-      `${process.env.JIRA_EMAIL}:${process.env.JIRA_API_TOKEN.replace(/"/g, '')}`
-    ).toString('base64');
+    const client = await getJiraClient(req.user);
 
     const { projectKey, query, issueType } = req.query;
     if (!projectKey) {
@@ -207,23 +188,13 @@ export const searchBacklog = async (req, res) => {
     }
     jql += ` ORDER BY updated DESC`;
 
-    const url = `${process.env.JIRA_HOST}/rest/api/3/search/jql`;
-    const params = new URLSearchParams({
+    const { issues } = await searchIssues(client, {
       jql,
-      maxResults: "15",
-      fields: "summary,issuetype,status,parent",
+      maxResults: 15,
+      fields: ["summary", "issuetype", "status", "parent"],
     });
-    const response = await axios.get(
-      `${url}?${params.toString()}`,
-      {
-        headers: {
-          Authorization: `Basic ${basicAuth}`,
-          Accept: "application/json",
-        },
-      }
-    );
 
-    const issues = (response.data?.issues || []).map((issue) => ({
+    const mapped = issues.map((issue) => ({
       key: issue.key,
       summary: issue.fields?.summary,
       type: issue.fields?.issuetype?.name,
@@ -231,9 +202,9 @@ export const searchBacklog = async (req, res) => {
       parentKey: issue.fields?.parent?.key || null,
     }));
 
-    return res.status(200).json(issues);
+    return res.status(200).json(mapped);
   } catch (err) {
-    if (err.response?.status === 401) {
+    if (err.message?.includes("Jira") || err.response?.status === 401) {
       return res
         .status(401)
         .json({ error: "Jira session expired. Please login again." });
