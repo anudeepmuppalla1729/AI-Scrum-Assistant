@@ -3,25 +3,25 @@ import type { ChatSession, ChatMessage } from "../types";
 
 export async function getChatSessions(boardId?: string): Promise<ChatSession[]> {
   const params = boardId ? `?boardId=${boardId}` : "";
-  const { data } = await api.get(`/api/v1/scrum/chat/sessions${params}`);
+  const { data } = await api.get(`/api/v1/chat/sessions${params}`);
   return data;
 }
 
 export async function createChatSession(boardId?: string): Promise<ChatSession> {
-  const { data } = await api.post("/api/v1/scrum/chat/session", { boardId });
+  const { data } = await api.post("/api/v1/chat/session", { boardId });
   return data;
 }
 
 export async function deleteChatSession(sessionId: string): Promise<void> {
-  await api.delete(`/api/v1/scrum/chat/session/${sessionId}`);
+  await api.delete(`/api/v1/chat/session/${sessionId}`);
 }
 
 export async function renameChatSession(sessionId: string, title: string): Promise<void> {
-  await api.patch(`/api/v1/scrum/chat/session/${sessionId}`, { title });
+  await api.patch(`/api/v1/chat/session/${sessionId}`, { title });
 }
 
 export async function getChatMessages(sessionId: string): Promise<ChatMessage[]> {
-  const { data } = await api.get(`/api/v1/scrum/chat/${sessionId}/messages`);
+  const { data } = await api.get(`/api/v1/chat/${sessionId}/messages`);
   return data;
 }
 
@@ -34,7 +34,7 @@ export async function sendChatMessage(
   assistantMessage: ChatMessage;
   sessionTitle?: string;
 }> {
-  const { data } = await api.post(`/api/v1/scrum/chat/${sessionId}`, {
+  const { data } = await api.post(`/api/v1/chat/${sessionId}`, {
     message,
     workspace,
   });

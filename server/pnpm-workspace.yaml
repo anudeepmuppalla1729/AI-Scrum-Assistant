@@ -1,6 +1,6 @@
 allowBuilds:
-  '@scarf/scarf': set this to true or false
-  msgpackr-extract: set this to true or false
+  '@scarf/scarf': false
+  msgpackr-extract: false
   onnxruntime-node: false
   protobufjs: false
   sharp: false

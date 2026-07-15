@@ -7,19 +7,19 @@ import type {
 
 // PRD Sessions
 export async function getPRDSessions(): Promise<PRDSession[]> {
-  const { data } = await api.get("/api/v1/scrum/prd/sessions");
+  const { data } = await api.get("/api/v1/prd/sessions");
   return data;
 }
 
 export async function getPRDSession(sessionId: string): Promise<PRDSession> {
-  const { data } = await api.get(`/api/v1/scrum/prd/session/${sessionId}`);
+  const { data } = await api.get(`/api/v1/prd/session/${sessionId}`);
   return data;
 }
 
 export async function createPRDSession(
   body: { title?: string; prompt?: string; options?: Record<string, boolean> } = {}
 ): Promise<PRDSession> {
-  const { data } = await api.post("/api/v1/scrum/prd/session", body);
+  const { data } = await api.post("/api/v1/prd/session", body);
   return data;
 }
 
@@ -27,24 +27,24 @@ export async function updatePRDSession(
   sessionId: string,
   body: Partial<Pick<PRDSession, "title" | "prompt" | "epics" | "options">>
 ): Promise<PRDSession> {
-  const { data } = await api.patch(`/api/v1/scrum/prd/session/${sessionId}`, body);
+  const { data } = await api.patch(`/api/v1/prd/session/${sessionId}`, body);
   return data;
 }
 
 export async function deletePRDSession(sessionId: string): Promise<void> {
-  await api.delete(`/api/v1/scrum/prd/session/${sessionId}`);
+  await api.delete(`/api/v1/prd/session/${sessionId}`);
 }
 
 // Generate suggestions (PRD upload)
 export async function generateSuggestions(formData: FormData): Promise<void> {
-  await api.post("/api/v1/scrum/suggestions", formData, {
+  await api.post("/api/v1/backlog/suggestions", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
 }
 
 // Generated Backlog
 export async function getGeneratedBacklog(id: string): Promise<GeneratedBacklog> {
-  const { data } = await api.get(`/api/v1/scrum/backlog/generated/${id}`);
+  const { data } = await api.get(`/api/v1/backlog/generated/${id}`);
   return data;
 }
 
@@ -52,7 +52,7 @@ export async function updateGeneratedBacklog(
   id: string,
   body: { rejectedEpicIds: string[] }
 ): Promise<void> {
-  await api.patch(`/api/v1/scrum/backlog/generated/${id}`, body);
+  await api.patch(`/api/v1/backlog/generated/${id}`, body);
 }
 
 export async function updateStory(
@@ -60,14 +60,14 @@ export async function updateStory(
   storyId: string,
   body: Record<string, unknown>
 ): Promise<void> {
-  await api.patch(`/api/v1/scrum/backlog/generated/${backlogId}/stories/${storyId}`, body);
+  await api.patch(`/api/v1/backlog/generated/${backlogId}/stories/${storyId}`, body);
 }
 
 export async function approveAndPush(
   id: string,
   epicId?: string
 ): Promise<void> {
-  await api.post(`/api/v1/scrum/backlog/generated/${id}/approve`, {
+  await api.post(`/api/v1/backlog/generated/${id}/approve`, {
     epicId: epicId ?? null,
   });
 }
@@ -86,14 +86,14 @@ export async function pushBacklogItem(body: {
     acceptanceCriteria?: string[];
   };
 }): Promise<{ success: boolean; jiraKey: string; jiraUrl: string }> {
-  const { data } = await api.post("/api/v1/scrum/backlog/push", body);
+  const { data } = await api.post("/api/v1/backlog/push", body);
   return data;
 }
 
 // Push history
 export async function getPushHistory(sessionId?: string): Promise<PushedBacklog[]> {
   const params = sessionId ? `?sessionId=${sessionId}` : "";
-  const { data } = await api.get(`/api/v1/scrum/backlog/history${params}`);
+  const { data } = await api.get(`/api/v1/backlog/history${params}`);
   return data;
 }
 
@@ -106,7 +106,7 @@ export async function searchBacklog(
   const params = new URLSearchParams({ projectKey });
   if (query) params.set("query", query);
   if (issueType) params.set("issueType", issueType);
-  const { data } = await api.get(`/api/v1/scrum/backlog/search?${params}`);
+  const { data } = await api.get(`/api/v1/backlog/search?${params}`);
   return data;
 }
 
