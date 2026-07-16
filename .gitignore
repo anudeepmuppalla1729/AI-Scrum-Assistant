@@ -3,3 +3,5 @@ tempScripts
 mimo-langgraph-integration/
 skills/
 convo/
+.env
+.env.test
