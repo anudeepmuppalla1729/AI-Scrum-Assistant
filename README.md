@@ -194,6 +194,70 @@ Explore the `docs/` directory for a deep dive into implementation details:
 
 ---
 
+## Testing
+
+The project uses Node.js built-in test runner (`node:test`) with `node:assert/strict`.
+
+### Run Tests
+
+```bash
+cd server
+
+# Unit tests (no external services needed)
+npm run test:unit
+
+# Health checks (needs Redis, MongoDB, ChromaDB running)
+npm run test:health
+
+# Integration tests (mocked, some need env vars)
+npm run test:integration
+
+# Everything
+npm run test:all
+```
+
+### Test Structure
+
+```
+server/test/
+├── unit/                        # Pure logic, no mocks needed
+│   ├── tokenizer.test.js        # Token estimation
+│   ├── velocityRef.test.js      # Velocity calculation
+│   ├── validation.test.js       # Story validation rules
+│   ├── state.test.js            # StateAnnotation reducers
+│   ├── schemas.test.js          # Zod schema validation
+│   ├── ticketTransformer.test.js # JIRA payload transforms
+│   ├── auth.middleware.test.js  # JWT auth
+│   ├── generateToken.test.js   # JWT generation
+│   └── agentEventBus.test.js   # Event bus state
+├── integration/
+│   ├── health/                  # Infrastructure health
+│   │   ├── redis.health.test.js
+│   │   ├── mongodb.health.test.js
+│   │   ├── chromadb.health.test.js
+│   │   └── jira.health.test.js
+│   ├── jiraClient.test.js       # JIRA SDK with mocks
+│   ├── hierarchy.service.test.js # Epic/Story/Subtask
+│   └── backlog.controller.test.js # Controller logic
+└── helpers/                     # Shared test utilities
+    ├── mockReqRes.js
+    ├── mockJiraClient.js
+    └── mockModels.js
+```
+
+### Health Checks
+
+Health tests verify that external services are reachable:
+
+| Service | What it checks |
+|---------|---------------|
+| **Redis** | `PING`, `SET/GET`, `INFO` |
+| **MongoDB** | Connection, `ping()`, CRUD |
+| **ChromaDB** | `heartbeat()`, collection create/delete |
+| **JIRA** | Credentials present, API reachable, auth valid |
+
+---
+
 ## Architecture Trade-offs (Speed vs Scale)
 
 In order to rapidly prototype this complex platform, several intentional engineering trade-offs were made. The following breakdown contrasts our current architecture with the requirements for massive enterprise scale.
