@@ -1,4 +1,18 @@
+# ============================================================
+# AI Scrum Assistant — Docker Compose
+# ============================================================
+# MongoDB Atlas (cloud) — no local MongoDB container needed
+# Redis + ChromaDB run in Docker
+# Server runs in Docker
+#
+# Start everything:  docker compose up -d
+# View logs:         docker compose logs -f server
+# Stop everything:   docker compose down
+# Stop + cleanup:    docker compose down -v  (deletes data volumes)
+# ============================================================
+
 services:
+  # ── Redis ──────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
     ports:
@@ -6,6 +20,63 @@ services:
     volumes:
       - redis_data:/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── ChromaDB (Vector Database) ─────────────────────────────
+  chroma:
+    image: chromadb/chroma:latest
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/8000'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Embedding Service (Python) ────────────────────────────
+  embedding:
+    build:
+      context: ./embedding-service
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+  # ── Server (AI Scrum Assistant Backend) ────────────────────
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "2000:2000"
+    env_file:
+      - ./server/.env.docker
+    environment:
+      - EMBEDDING_SERVICE_URL=http://embedding:8001
+    depends_on:
+      redis:
+        condition: service_healthy
+      chroma:
+        condition: service_healthy
+      embedding:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   redis_data:
+  chroma_data:
