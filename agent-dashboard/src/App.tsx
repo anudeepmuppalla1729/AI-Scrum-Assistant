@@ -89,7 +89,8 @@ const EVENT_ICONS: Record<string, any> = {
 /* =============================================
    SSE URL
    ============================================= */
-const SSE_URL = "http://localhost:2000/api/v1/events/agent-status";
+const API_BASE = import.meta.env.VITE_API_URL || "";
+const SSE_URL = `${API_BASE}/api/v1/events/agent-status`;
 
 /* =============================================
    App Component
