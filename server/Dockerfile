@@ -30,17 +30,12 @@ RUN addgroup -g 1001 -S appgroup && \
 
 WORKDIR /app
 
-# Copy source code
-COPY src/ ./src/
-
-# Copy node_modules from deps stage (already fully installed)
+# Copy node_modules (readable by all, no chown needed)
 COPY --from=deps /app/node_modules ./node_modules
 
-# Copy package.json (needed for runtime metadata)
-COPY package.json ./
-
-# Set ownership to non-root user
-RUN chown -R appuser:appgroup /app
+# Copy source code and package.json with correct ownership
+COPY --chown=appuser:appgroup src/ ./src/
+COPY --chown=appuser:appgroup package.json ./
 
 # Switch to non-root user
 USER appuser
