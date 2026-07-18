@@ -1,6 +1,7 @@
 import express from "express";
 import multer from "multer";
 import { auth } from "../middleware/auth.js";
+import { optionalAuth } from "../middleware/optionalAuth.js";
 import { generateSuggestions } from "../controllers/backlogGeneration.controller.js";
 import { pushAISuggestionsToJira } from "../controllers/jiraPush.controller.js";
 import {
@@ -50,7 +51,7 @@ const router = express.Router();
  *       400:
  *         description: Bad request
  */
-router.post("/suggestions", auth, upload.single("prdFile"), generateSuggestions);
+router.post("/suggestions", optionalAuth, upload.single("prdFile"), generateSuggestions);
 
 // ── Push to JIRA ──
 

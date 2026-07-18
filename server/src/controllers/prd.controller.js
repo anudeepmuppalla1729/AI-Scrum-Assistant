@@ -4,9 +4,8 @@ import PRDSession from "../models/PRDSession.js";
 
 export const getPRDSessions = async (req, res) => {
     try {
-        const userId = req.user.userId;
-        // Return mostly metadata, maybe limit epics if they are huge? No, usually fine.
-        // Selecting only necessary fields for list view might be an optimization, but keep simple for now.
+        const userId = req.user?.userId;
+        if (!userId) return res.status(200).json([]);
         const sessions = await PRDSession.find({ userId }).sort({ updatedAt: -1 });
         res.status(200).json(sessions);
     } catch (error) {
@@ -17,7 +16,7 @@ export const getPRDSessions = async (req, res) => {
 
 export const createPRDSession = async (req, res) => {
     try {
-        const userId = req.user.userId;
+        const userId = req.user?.userId || null;
         const { prompt, epics, options, title } = req.body;
 
         const session = new PRDSession({
@@ -39,7 +38,14 @@ export const createPRDSession = async (req, res) => {
 export const getPRDSession = async (req, res) => {
     try {
         const { sessionId } = req.params;
-        const session = await PRDSession.findOne({ _id: sessionId, userId: req.user.userId });
+        const userId = req.user?.userId;
+        const query = { _id: sessionId };
+        if (userId) {
+            query.$or = [{ userId }, { userId: null }];
+        } else {
+            query.userId = null;
+        }
+        const session = await PRDSession.findOne(query);
 
         if (!session) {
             return res.status(404).json({ error: "Session not found." });
@@ -54,6 +60,7 @@ export const getPRDSession = async (req, res) => {
 export const updatePRDSession = async (req, res) => {
     try {
         const { sessionId } = req.params;
+        const userId = req.user?.userId;
         const { epics, title, prompt, options } = req.body;
 
         const updateData = {};
@@ -62,8 +69,15 @@ export const updatePRDSession = async (req, res) => {
         if (prompt !== undefined) updateData.prompt = prompt;
         if (options !== undefined) updateData.options = options;
 
+        const query = { _id: sessionId };
+        if (userId) {
+            query.$or = [{ userId }, { userId: null }];
+        } else {
+            query.userId = null;
+        }
+
         const session = await PRDSession.findOneAndUpdate(
-            { _id: sessionId, userId: req.user.userId },
+            query,
             updateData,
             { returnDocument: 'after' }
         );
@@ -82,10 +96,14 @@ export const updatePRDSession = async (req, res) => {
 export const deletePRDSession = async (req, res) => {
     try {
         const { sessionId } = req.params;
-        const session = await PRDSession.findOneAndDelete({
-            _id: sessionId,
-            userId: req.user.userId,
-        });
+        const userId = req.user?.userId;
+        const query = { _id: sessionId };
+        if (userId) {
+            query.$or = [{ userId }, { userId: null }];
+        } else {
+            query.userId = null;
+        }
+        const session = await PRDSession.findOneAndDelete(query);
 
         if (!session) {
             return res.status(404).json({ error: "Session not found." });

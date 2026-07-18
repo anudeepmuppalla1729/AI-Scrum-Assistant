@@ -32,11 +32,14 @@ export const generateSuggestions = async (req, res) => {
       // ignore
     }
 
-    const userId = req.user.userId || req.user._id;
+    const userId = req.user?.userId || req.user?._id || null;
 
-    if (!projectKey) {
+    // projectKey required for logged-in users, optional for anonymous
+    if (!projectKey && userId) {
       return res.status(400).json({ error: "projectKey is required" });
     }
+
+    const effectiveProjectKey = projectKey || "DEMO";
 
     let prdText = req.body.prompt || "";
     if (req.file) {
@@ -47,10 +50,13 @@ export const generateSuggestions = async (req, res) => {
       }
     }
 
-    const businessDocs = await BusinessDocument.find({
-      _id: { $in: businessDocIds },
-      userId
-    });
+    let businessDocs = [];
+    if (userId && businessDocIds.length > 0) {
+      businessDocs = await BusinessDocument.find({
+        _id: { $in: businessDocIds },
+        userId
+      });
+    }
 
     const business_docs = businessDocs.map(doc => doc.content);
 
@@ -62,7 +68,7 @@ export const generateSuggestions = async (req, res) => {
       raw_prd: prdText,
       business_docs,
       boardId,
-      projectKey,
+      projectKey: effectiveProjectKey,
       userId,
       sessionId
     }).then(async (result) => {

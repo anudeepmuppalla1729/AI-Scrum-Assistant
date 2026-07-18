@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { TopBar } from "./components/layout/TopBar";
 import { RequireAuth } from "./components/auth/RequireAuth";
 import { RequireWorkspace } from "./components/auth/RequireWorkspace";
+import { LandingPage } from "./pages/LandingPage";
 import { LoginPage } from "./pages/LoginPage";
 import { OAuthCallbackPage } from "./pages/OAuthCallbackPage";
 import { OAuthSuccessPage } from "./pages/OAuthSuccessPage";
@@ -12,15 +13,28 @@ import { ChatPage } from "./pages/ChatPage";
 import { PRDPage } from "./pages/PRDPage";
 import { BacklogReviewPage } from "./pages/BacklogReviewPage";
 import { DocumentsPage } from "./pages/DocumentsPage";
+import { DocsPage } from "./pages/DocsPage";
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
         {/* Public routes */}
-        <Route path="/" element={<LoginPage />} />
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<LoginPage />} />
         <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
         <Route path="/oauth/success" element={<OAuthSuccessPage />} />
+
+        {/* Public with TopBar */}
+        <Route element={<TopBarLayout />}>
+          <Route path="/docs" element={<DocsPage />} />
+        </Route>
+
+        {/* Free — no login required (backlog generation) */}
+        <Route element={<TopBarLayout />}>
+          <Route path="/prd" element={<PRDPage />} />
+          <Route path="/prd/:sessionId" element={<PRDPage />} />
+        </Route>
 
         {/* Auth required */}
         <Route element={<RequireAuth />}>
@@ -31,8 +45,6 @@ export default function App() {
             <Route element={<TopBarLayout />}>
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/sprints" element={<SprintsPage />} />
-              <Route path="/prd" element={<PRDPage />} />
-              <Route path="/prd/:sessionId" element={<PRDPage />} />
               <Route path="/backlog/review/:id" element={<BacklogReviewPage />} />
               <Route path="/chat" element={<ChatPage />} />
               <Route path="/chat/:sessionId" element={<ChatPage />} />

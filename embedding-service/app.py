@@ -7,40 +7,48 @@ Used by the Node.js server for RAG and vector search operations.
 
 import os
 import logging
-from contextlib import asynccontextmanager
+import threading
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from sentence_transformers import SentenceTransformer
 
 # ── Config ──────────────────────────────────────────────────────
-MODEL_NAME = os.getenv("EMBEDDING_MODEL", "nomic-ai/nomic-embed-text-v1.5")
+MODEL_NAME = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
 HOST = os.getenv("EMBEDDING_HOST", "0.0.0.0")
-PORT = int(os.getenv("EMBEDDING_PORT", "8001"))
+PORT = int(os.getenv("PORT", os.getenv("EMBEDDING_PORT", "8001")))
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("embedding-service")
 
 # ── Model state ─────────────────────────────────────────────────
 model: SentenceTransformer | None = None
+model_loading = False
+model_error: str | None = None
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Load the embedding model at startup."""
-    global model
-    logger.info(f"Loading embedding model: {MODEL_NAME}")
-    model = SentenceTransformer(MODEL_NAME, trust_remote_code=True)
-    logger.info(f"Model loaded. Embedding dimension: {model.get_sentence_embedding_dimension()}")
-    yield
-    logger.info("Shutting down embedding service")
+def load_model():
+    """Load the model in a background thread."""
+    global model, model_loading, model_error
+    model_loading = True
+    try:
+        logger.info(f"Loading embedding model: {MODEL_NAME}")
+        model = SentenceTransformer(MODEL_NAME)
+        logger.info(f"Model loaded. Embedding dimension: {model.get_embedding_dimension()}")
+    except Exception as e:
+        model_error = str(e)
+        logger.error(f"Failed to load model: {e}")
+    finally:
+        model_loading = False
 
+
+# Start model loading in background thread immediately
+threading.Thread(target=load_model, daemon=True).start()
 
 app = FastAPI(
     title="Embedding Service",
     description="Text embedding API using nomic-embed-text-v1.5",
     version="1.0.0",
-    lifespan=lifespan,
 )
 
 
@@ -68,34 +76,37 @@ class EmbedQueryResponse(BaseModel):
 class HealthResponse(BaseModel):
     status: str
     model: str
-    dimension: int
+    dimension: int | None = None
 
 
 # ── Endpoints ───────────────────────────────────────────────────
 @app.get("/health", response_model=HealthResponse)
 async def health():
-    """Health check endpoint."""
-    if model is None:
-        raise HTTPException(status_code=503, detail="Model not loaded")
-    return HealthResponse(
-        status="ok",
-        model=MODEL_NAME,
-        dimension=model.get_sentence_embedding_dimension(),
-    )
+    """Health check endpoint. Returns 200 even during model loading."""
+    if model is not None:
+        return HealthResponse(
+            status="ok",
+            model=MODEL_NAME,
+            dimension=model.get_embedding_dimension(),
+        )
+    elif model_loading:
+        return HealthResponse(status="loading", model=MODEL_NAME)
+    else:
+        return HealthResponse(status="error", model=MODEL_NAME)
 
 
 @app.post("/embed", response_model=EmbedResponse)
 async def embed(req: EmbedRequest):
     """Embed a batch of texts. Returns one vector per input text."""
     if model is None:
-        raise HTTPException(status_code=503, detail="Model not loaded")
+        raise HTTPException(status_code=503, detail="Model not loaded yet")
 
     try:
         embeddings = model.encode(req.texts, normalize_embeddings=True)
         return EmbedResponse(
             embeddings=embeddings.tolist(),
             model=MODEL_NAME,
-            dimension=model.get_sentence_embedding_dimension(),
+            dimension=model.get_embedding_dimension(),
         )
     except Exception as e:
         logger.error(f"Embedding error: {e}")
@@ -106,14 +117,14 @@ async def embed(req: EmbedRequest):
 async def embed_query(req: EmbedQueryRequest):
     """Embed a single query text."""
     if model is None:
-        raise HTTPException(status_code=503, detail="Model not loaded")
+        raise HTTPException(status_code=503, detail="Model not loaded yet")
 
     try:
         embedding = model.encode(req.text, normalize_embeddings=True)
         return EmbedQueryResponse(
             embedding=embedding.tolist(),
             model=MODEL_NAME,
-            dimension=model.get_sentence_embedding_dimension(),
+            dimension=model.get_embedding_dimension(),
         )
     except Exception as e:
         logger.error(f"Embedding error: {e}")

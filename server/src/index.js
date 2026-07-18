@@ -39,6 +39,17 @@ async function startServer() {
     console.log(`Server is running on port ${PORT} Baby!!!`);
     console.log(`Open in browser: http://localhost:${PORT} Baby!!!`);
     console.log("✓ MongoDB Connected");
+
+    // Check embedding service health
+    const embeddingUrl = process.env.EMBEDDING_SERVICE_URL || "http://localhost:8001";
+    fetch(`${embeddingUrl}/health`)
+      .then(res => res.json())
+      .then(data => {
+        console.log(`✓ Embedding Service Online (${data.model}, ${data.dimension || "loading..."}d)`);
+      })
+      .catch(err => {
+        console.error(`✗ Embedding Service Offline: ${err.message}`);
+      });
   });
 }
 

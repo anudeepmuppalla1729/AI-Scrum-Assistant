@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useWorkspaceStore } from "../store/useWorkspaceStore";
+import { useAuthStore } from "../store/useAuthStore";
 import { useSSE } from "../hooks/useSSE";
 import * as scrumApi from "../api/scrum";
 import * as docsApi from "../api/documents";
@@ -27,6 +28,7 @@ export function PRDPage() {
   const { sessionId } = useParams();
   const navigate = useNavigate();
   const workspace = useWorkspaceStore((s) => s.workspace);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated());
 
   const [sessions, setSessions] = useState<PRDSession[]>([]);
   const [currentSession, setCurrentSession] = useState<PRDSession | null>(null);
@@ -88,8 +90,10 @@ export function PRDPage() {
   }, [sessionId, loadSession]);
 
   useEffect(() => {
-    docsApi.getDocuments(workspace?.boardId?.toString()).then(setBusinessDocs).catch(() => {});
-  }, [workspace]);
+    if (isAuthenticated) {
+      docsApi.getDocuments(workspace?.boardId?.toString()).then(setBusinessDocs).catch(() => {});
+    }
+  }, [workspace, isAuthenticated]);
 
   // Connect SSE when generating
   useEffect(() => {
@@ -409,17 +413,25 @@ export function PRDPage() {
                     {epics.length} epics &middot; {epics.reduce((acc, e) => acc + (e.stories?.length ?? 0), 0)} stories
                   </span>
                 </div>
-                <Button
-                  onClick={() => {
-                    const backlogId = currentSession?.generatedBacklogId ?? currentSession?._id;
-                    if (backlogId) {
-                      navigate(`/backlog/review/${backlogId}`);
-                    }
-                  }}
-                  disabled={selectedCount === 0}
-                >
-                  Review & Push ({selectedCount})
-                </Button>
+                {isAuthenticated ? (
+                  <Button
+                    onClick={() => {
+                      const backlogId = currentSession?.generatedBacklogId ?? currentSession?._id;
+                      if (backlogId) {
+                        navigate(`/backlog/review/${backlogId}`);
+                      }
+                    }}
+                    disabled={selectedCount === 0}
+                  >
+                    Review & Push ({selectedCount})
+                  </Button>
+                ) : (
+                  <Link to="/">
+                    <Button>
+                      Login to Push to Jira
+                    </Button>
+                  </Link>
+                )}
               </div>
 
               <div className="prd-epics">

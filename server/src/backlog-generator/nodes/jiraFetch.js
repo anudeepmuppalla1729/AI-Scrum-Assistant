@@ -4,6 +4,21 @@ import { AgileClient } from "jira.js";
 
 const jiraFetchNode = async (state) => {
   const { userId, projectKey, boardId } = state;
+
+  // Anonymous user — return dummy Jira context
+  if (!userId) {
+    console.log("[jiraFetch] No userId — returning dummy context for anonymous user");
+    return {
+      jira_context: {
+        velocity: 20,
+        sprint_cadence: 14,
+        team: { developers: 3, qa: 1, design: 1 },
+        previous_sprints: [],
+        open_bugs: 0
+      }
+    };
+  }
+
   const user = await User.findById(userId);
   if (!user) throw new Error("User not found");
   const client = await getJiraClient(user);

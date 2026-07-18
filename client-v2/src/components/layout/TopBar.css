@@ -69,6 +69,22 @@
   background: var(--color-primary-light);
 }
 
+.topbar-nav-item.locked {
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.topbar-nav-item.locked:hover {
+  color: var(--color-text-muted);
+  background: transparent;
+  opacity: 0.8;
+}
+
+.topbar-lock-icon {
+  opacity: 0.7;
+}
+
 .topbar-right {
   display: flex;
   align-items: center;

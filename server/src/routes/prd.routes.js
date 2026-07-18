@@ -1,5 +1,5 @@
 import express from "express";
-import { auth } from "../middleware/auth.js";
+import { optionalAuth } from "../middleware/optionalAuth.js";
 import {
   getPRDSessions,
   createPRDSession,
@@ -21,7 +21,7 @@ const router = express.Router();
  *       200:
  *         description: List of PRD sessions
  */
-router.get("/sessions", auth, getPRDSessions);
+router.get("/sessions", optionalAuth, getPRDSessions);
 
 /**
  * @openapi
@@ -34,7 +34,7 @@ router.get("/sessions", auth, getPRDSessions);
  *       201:
  *         description: Created session
  */
-router.post("/session", auth, createPRDSession);
+router.post("/session", optionalAuth, createPRDSession);
 
 /**
  * @openapi
@@ -52,8 +52,8 @@ router.post("/session", auth, createPRDSession);
  *     tags:
  *       - PRD
  */
-router.get("/session/:sessionId", auth, getPRDSession);
-router.patch("/session/:sessionId", auth, updatePRDSession);
-router.delete("/session/:sessionId", auth, deletePRDSession);
+router.get("/session/:sessionId", optionalAuth, getPRDSession);
+router.patch("/session/:sessionId", optionalAuth, updatePRDSession);
+router.delete("/session/:sessionId", optionalAuth, deletePRDSession);
 
 export default router;
