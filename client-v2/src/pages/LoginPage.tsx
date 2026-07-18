@@ -5,6 +5,8 @@ import { useWorkspaceStore } from "../store/useWorkspaceStore";
 import { Button } from "../components/ui/Button";
 import "./LoginPage.css";
 
+const API_BASE = import.meta.env.VITE_API_URL || "";
+
 export function LoginPage() {
   const navigate = useNavigate();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -17,7 +19,7 @@ export function LoginPage() {
   }, [isAuthenticated, workspace, navigate]);
 
   const handleLogin = () => {
-    window.location.href = "/auth/jira/login";
+    window.location.href = `${API_BASE}/auth/jira/login`;
   };
 
   return (
