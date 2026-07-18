@@ -1,6 +1,5 @@
 import { ChromaClient } from "chromadb";
-import customEmbeddings from "../../utils/customEmbeddings.cjs";
-const HuggingFaceTransformersEmbeddings = customEmbeddings.CustomHuggingFaceEmbeddings;
+import { embeddingClient } from "../../utils/embeddingClient.js";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import dotenv from "dotenv";
 import {
@@ -12,25 +11,15 @@ import {
 dotenv.config();
 
 // Initialize ChromaDB Client
+const chromaUrl = process.env.CHROMA_URL || "http://localhost:8000";
 const client = new ChromaClient({
-  path: "http://localhost:8000",
-});
-
-import { modelProgressCallback } from "../../utils/modelProgress.js";
-
-// Initialize Embeddings with local model
-const embeddings = new HuggingFaceTransformersEmbeddings({
-  model: "nomic-ai/nomic-embed-text-v1.5",
-  pretrainedOptions: {
-    dtype: "q8",
-    progress_callback: modelProgressCallback,
-  }
+  path: chromaUrl,
 });
 
 const collectionCache = new Map();
 const embeddingFunction = {
   generate: async (texts) => {
-    return await Promise.all(texts.map((t) => embeddings.embedQuery(t)));
+    return await embeddingClient.embedDocuments(texts);
   },
 };
 
@@ -79,7 +68,7 @@ Description: ${ticket.description || "No description"}
 Priority: ${ticket.priority}
 Type: ${ticket.issuetype}`;
 
-  const embedding = await embeddings.embedQuery(text);
+  const embedding = await embeddingClient.embedQuery(text);
 
   await col.upsert({
     ids: [ticket.key],
@@ -110,7 +99,7 @@ Goal: ${sprint.goal || "No goal"}
 Start Date: ${sprint.startDate}
 End Date: ${sprint.endDate}`;
 
-  const embedding = await embeddings.embedQuery(text);
+  const embedding = await embeddingClient.embedQuery(text);
 
   await col.upsert({
     ids: [`sprint-${sprint.id}`],
@@ -143,7 +132,7 @@ export const upsertPRD = async (prdText, filename, options = {}) => {
 
   // Batch embeddings
   const embeddingsBatch = await Promise.all(
-    texts.map((t) => embeddings.embedQuery(t))
+    texts.map((t) => embeddingClient.embedQuery(t))
   );
 
   const metadatas = docs.map((_, i) => ({
@@ -170,7 +159,7 @@ export const queryKnowledgeBase = async (query, nResults = 5, options = {}) => {
   const candidateCollectionNames = getCandidateCollectionNames(boardId, {
     includeLegacyFallback,
   });
-  const queryEmbedding = await embeddings.embedQuery(query);
+  const queryEmbedding = await embeddingClient.embedQuery(query);
 
   for (const collectionName of candidateCollectionNames) {
     const col = await getCollectionByName(collectionName);
@@ -308,7 +297,7 @@ export const upsertBusinessDocument = async (id, content, filename, options = {}
   const texts = docs.map((d) => d.pageContent);
 
   const embeddingsBatch = await Promise.all(
-    texts.map((t) => embeddings.embedQuery(t))
+    texts.map((t) => embeddingClient.embedQuery(t))
   );
 
   const metadatas = docs.map((_, i) => ({

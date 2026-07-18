@@ -25,11 +25,12 @@ import agentEventsRoutes from "./routes/agentEvents.routes.js";
 
 const app = express();
 
+const allowedOrigins = (process.env.CORS_ORIGINS || process.env.FRONTEND_URL || "http://localhost:5173")
+  .split(",")
+  .map(o => o.trim());
+
 const corsOptions = {
-  origin: [
-    process.env.FRONTEND_URL || "http://localhost:5173",
-    "http://localhost:5174",
-  ],
+  origin: allowedOrigins,
   optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));

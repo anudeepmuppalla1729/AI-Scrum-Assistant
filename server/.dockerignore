@@ -1,0 +1,31 @@
+# Dependencies (will be installed fresh in container)
+node_modules/
+.pnpm-store/
+
+# Environment (secrets should be passed at runtime, not baked in)
+.env
+.env.local
+.env.test
+
+# Git
+.git/
+.gitignore
+
+# Tests (not needed in production)
+test/
+
+# Documentation
+docs/
+*.md
+
+# IDE
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+dist/
+coverage/

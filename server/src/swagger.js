@@ -14,7 +14,7 @@ export function setupSwagger(app) {
       },
       servers: [
         {
-          url: "http://localhost:2000",
+          url: process.env.SERVER_URL || "http://localhost:2000",
           description: "Local server",
         },
       ],

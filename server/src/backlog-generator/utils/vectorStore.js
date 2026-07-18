@@ -1,18 +1,10 @@
-import customEmbeddings from "../../utils/customEmbeddings.cjs";
-const HuggingFaceTransformersEmbeddings = customEmbeddings.CustomHuggingFaceEmbeddings;
+import { embeddingClient } from "../../utils/embeddingClient.js";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import dotenv from "dotenv";
 dotenv.config();
-import { modelProgressCallback } from "../../utils/modelProgress.js";
 
 const getEmbeddings = () => {
-  return new HuggingFaceTransformersEmbeddings({
-    model: "nomic-ai/nomic-embed-text-v1.5",
-    pretrainedOptions: {
-      dtype: "q8",
-      progress_callback: modelProgressCallback,
-    }
-  });
+  return embeddingClient;
 };
 
 class MemoryVectorStore {
