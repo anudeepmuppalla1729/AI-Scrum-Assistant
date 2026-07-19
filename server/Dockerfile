@@ -8,7 +8,7 @@
 # ============================================================
 
 # ── Stage 1: Install all dependencies ──────────────────────────
-FROM node:20-alpine AS deps
+FROM node:22-alpine AS deps
 
 # Install pnpm
 RUN npm install -g pnpm@11
@@ -22,7 +22,7 @@ COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
 # ── Stage 2: Production image ──────────────────────────────────
-FROM node:20-alpine AS production
+FROM node:22-alpine AS production
 
 # Security: don't run as root
 RUN addgroup -g 1001 -S appgroup && \
