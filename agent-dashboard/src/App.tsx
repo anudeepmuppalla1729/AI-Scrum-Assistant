@@ -338,7 +338,7 @@ function App() {
       <header className="top-ribbon">
         <div className="ribbon-left">
           <div className="ribbon-logo">
-            <BrainCircuit size={22} color="white" />
+            <img src="/logo.svg" alt="Agent Dashboard" width={26} height={26} />
           </div>
           <div>
             <div className="ribbon-title">Agent Pipeline Dashboard</div>
