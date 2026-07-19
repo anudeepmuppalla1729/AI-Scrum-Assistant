@@ -16,7 +16,7 @@ RUN npm install -g pnpm@11
 WORKDIR /app
 
 # Copy package files first (layer caching — only re-runs if deps change)
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml .npmrc ./
 
 # Install ALL dependencies (prod + dev, with postinstall scripts)
 RUN pnpm install --frozen-lockfile
