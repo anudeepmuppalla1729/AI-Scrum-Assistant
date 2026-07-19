@@ -16,10 +16,10 @@ RUN npm install -g pnpm@11
 WORKDIR /app
 
 # Copy package files first (layer caching — only re-runs if deps change)
-COPY package.json pnpm-lock.yaml .npmrc ./
+COPY package.json pnpm-lock.yaml ./
 
-# Install ALL dependencies (prod + dev, with postinstall scripts)
-RUN pnpm install --frozen-lockfile
+# Install ALL dependencies (skip optional native build scripts — not needed at runtime)
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # ── Stage 2: Production image ──────────────────────────────────
 FROM node:22-alpine AS production
