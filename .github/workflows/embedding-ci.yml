@@ -41,8 +41,8 @@ jobs:
       - name: Smoke test — import app
         run: python -c "from app import app; print('FastAPI app loaded OK')"
 
-  build-push-deploy:
-    name: Build, Push & Deploy
+  build-and-push:
+    name: Build & Push
     needs: test
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -71,11 +71,3 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/ai-scrum-embedding:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
-
-      - name: Deploy to Railway
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: railway up --service ${{ secrets.RAILWAY_EMBEDDING_SERVICE }}
