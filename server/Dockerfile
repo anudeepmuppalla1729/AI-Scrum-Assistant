@@ -11,7 +11,7 @@
 FROM node:20-alpine AS deps
 
 # Install pnpm
-RUN npm install -g pnpm@9
+RUN npm install -g pnpm@11
 
 WORKDIR /app
 
